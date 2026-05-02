@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,14 @@ locals {
     gcp-security-admins     = "group:gcp-security-admins@${local.organization.domain}"
     gcp-support             = "group:gcp-support@${local.organization.domain}"
   }
+  org_logging_identities = merge(
+    module.organization[0].logging_identities.kms == null ? {} : {
+      "organization/logging/kms" = module.organization[0].logging_identities.kms
+    },
+    module.organization[0].logging_identities.logging == null ? {} : {
+      "organization/logging/sinks" = module.organization[0].logging_identities.logging
+    }
+  )
   org_tag_keys = {
     for k, v in module.organization[0].tag_keys : k => v.id
   }
@@ -79,26 +87,35 @@ module "organization" {
         id = local.organization_id
       }
     }
-    locations = {
-      default = local.defaults.locations.logging
-    }
+    email_addresses = local.ctx.email_addresses
+    locations       = local.ctx.locations
   }
+  contacts = lookup(local.organization, "contacts", {})
   factories_config = {
-    org_policy_custom_constraints = "${local.paths.organization}/custom-constraints"
-    custom_roles                  = "${local.paths.organization}/custom-roles"
-    tags                          = "${local.paths.organization}/tags"
+    custom_roles           = "${local.paths.organization}/custom-roles"
+    tags                   = "${local.paths.organization}/tags"
+    scc_sha_custom_modules = "${local.paths.organization}/scc-sha-custom-modules"
   }
   tags_config = {
     ignore_iam = true
   }
+  workforce_identity_pools = try(
+    local.organization.workforce_identity_pools, null
+  )
 }
 
 module "organization-iam" {
   source          = "../../../modules/organization"
   count           = local.organization.id != null ? 1 : 0
   organization_id = module.organization[0].id
+  asset_feeds     = lookup(local.organization, "asset_feeds", {})
   context = merge(local.ctx, {
-    condition_vars = local.ctx_condition_vars
+    condition_vars = merge(
+      local.ctx_condition_vars,
+      { folder_ids = module.factory.folder_ids },
+      { project_ids = module.factory.project_ids },
+      { iam_principals = local.ctx.iam_principals },
+    )
     custom_roles = merge(
       local.ctx.custom_roles,
       module.organization[0].custom_role_id
@@ -111,6 +128,7 @@ module "organization-iam" {
     project_ids = merge(
       local.ctx.project_ids, module.factory.project_ids
     )
+    pubsub_topics   = module.factory.pubsub_topics
     storage_buckets = module.factory.storage_buckets
     tag_keys = merge(
       local.ctx.tag_keys,
@@ -122,8 +140,9 @@ module "organization-iam" {
     )
   })
   factories_config = {
-    org_policies = "${local.paths.organization}/org-policies"
-    tags         = "${local.paths.organization}/tags"
+    org_policy_custom_constraints = "${local.paths.organization}/custom-constraints"
+    org_policies                  = "${local.paths.organization}/org-policies"
+    tags                          = "${local.paths.organization}/tags"
   }
   iam = lookup(
     local.organization, "iam", {}
@@ -131,13 +150,21 @@ module "organization-iam" {
   iam_by_principals = lookup(
     local.organization, "iam_by_principals", {}
   )
+  iam_by_principals_conditional = lookup(
+    local.organization, "iam_by_principals_conditional", {}
+  )
   iam_bindings = lookup(
     local.organization, "iam_bindings", {}
   )
   iam_bindings_additive = lookup(
     local.organization, "iam_bindings_additive", {}
   )
-  logging_sinks = try(local.organization.logging.sinks, {})
+  iam_by_principals_additive = lookup(
+    local.organization, "iam_by_principals_additive", {}
+  )
+  logging_data_access = try(local.organization.data_access_logs, {})
+  logging_sinks       = try(local.organization.logging.sinks, {})
+  pam_entitlements    = try(local.organization.pam_entitlements, {})
   tags_config = {
     force_context_ids = true
   }

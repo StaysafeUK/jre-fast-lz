@@ -23,10 +23,23 @@ variable "auto_create_subnetworks" {
 variable "context" {
   description = "Context-specific interpolations."
   type = object({
-    regions = optional(map(string), {})
+    addresses      = optional(map(string), {})
+    cidr_ranges    = optional(map(string), {})
+    condition_vars = optional(map(map(string)), {})
+    custom_roles   = optional(map(string), {})
+    iam_principals = optional(map(string), {})
+    locations      = optional(map(string), {})
+    networks       = optional(map(string), {})
+    # legacy context
+    regions     = optional(map(string), {})
+    project_ids = optional(map(string), {})
   })
   default  = {}
   nullable = false
+  validation {
+    condition     = length(var.context.regions) == 0 || length(var.context.locations) == 0
+    error_message = "Only one of locations, regions can be used."
+  }
 }
 
 variable "create_googleapis_routes" {
@@ -81,7 +94,6 @@ variable "firewall_policy_enforcement_order" {
   type        = string
   nullable    = false
   default     = "AFTER_CLASSIC_FIREWALL"
-
   validation {
     condition     = var.firewall_policy_enforcement_order == "BEFORE_CLASSIC_FIREWALL" || var.firewall_policy_enforcement_order == "AFTER_CLASSIC_FIREWALL"
     error_message = "Enforcement order must be BEFORE_CLASSIC_FIREWALL or AFTER_CLASSIC_FIREWALL."
@@ -255,6 +267,7 @@ variable "psa_configs" {
   type = list(object({
     deletion_policy  = optional(string, null)
     ranges           = map(string)
+    labels           = optional(map(string), {})
     export_routes    = optional(bool, false)
     import_routes    = optional(bool, false)
     peered_domains   = optional(list(string), [])
@@ -309,6 +322,48 @@ variable "routing_mode" {
   validation {
     condition     = var.routing_mode == "GLOBAL" || var.routing_mode == "REGIONAL"
     error_message = "Routing type must be GLOBAL or REGIONAL."
+  }
+}
+
+variable "service_connection_policies" {
+  description = "Service connection policies, keyed by name."
+  type = map(object({
+    location      = string
+    service_class = string
+    description   = optional(string)
+    labels        = optional(map(string))
+    psc_config = object({
+      subnetworks                = list(string)
+      limit                      = optional(number)
+      producer_instance_location = optional(string)
+      # maps to allowed_google_producers_resource_hierarchy_level
+      nodes = optional(list(string))
+    })
+  }))
+  nullable = false
+  default  = {}
+  validation {
+    condition = alltrue([
+      for k, v in var.service_connection_policies :
+      v.psc_config.producer_instance_location == null || v.psc_config.producer_instance_location == "CUSTOM_RESOURCE_HIERARCHY_LEVELS"
+    ])
+    error_message = "Producer instance location must be null or CUSTOM_RESOURCE_HIERARCHY_LEVELS."
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.service_connection_policies :
+      v.psc_config.nodes == null || v.psc_config.producer_instance_location == "CUSTOM_RESOURCE_HIERARCHY_LEVELS"
+    ])
+    error_message = "Nodes can only be set if producer instance location is CUSTOM_RESOURCE_HIERARCHY_LEVELS."
+  }
+  validation {
+    condition = alltrue(flatten([
+      for k, v in var.service_connection_policies : [
+        for n in coalesce(v.psc_config.nodes, []) :
+        can(regex("^(projects|folders|organizations)/[a-zA-Z0-9-]+$", n))
+      ]
+    ]))
+    error_message = "Nodes must be in the format 'projects/id', 'folders/id', or 'organizations/id'."
   }
 }
 
@@ -457,6 +512,14 @@ variable "subnets_psc" {
     ip_cidr_range = string
     region        = string
     description   = optional(string)
+    flow_logs_config = optional(object({
+      aggregation_interval = optional(string)
+      filter_expression    = optional(string)
+      flow_sampling        = optional(number)
+      metadata             = optional(string)
+      # only if metadata == "CUSTOM_METADATA"
+      metadata_fields = optional(list(string))
+    }))
 
     iam = optional(map(list(string)), {})
     iam_bindings = optional(map(object({

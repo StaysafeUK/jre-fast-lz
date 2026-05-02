@@ -12,3 +12,13 @@ tag_values = {
   "environment/development" = "tagValues/1234567890"
   "environment/production"  = "tagValues/2345678901"
 }
+data_defaults = {
+  locations = {
+    storage = "europe-west1"
+  }
+}
+organization = {
+  domain      = "fast.example.com"
+  id          = 123456789012
+  customer_id = "C00000000"
+}

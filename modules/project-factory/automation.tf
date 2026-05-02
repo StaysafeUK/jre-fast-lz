@@ -24,7 +24,7 @@ locals {
         prefix           = coalesce(try(v.automation.prefix, null), v.prefix)
         project          = try(v.automation.project, null)
         service_accounts = try(v.automation.service_accounts, {})
-      } if try(v.automation.bucket, null) != null
+      } if try(v.automation.bucket, null) != null || try(v.automation.service_accounts, null) != null
     },
     {
       for k, v in local.projects_input : k => {
@@ -34,21 +34,25 @@ locals {
         prefix           = coalesce(try(v.automation.prefix, null), v.prefix)
         project          = try(v.automation.project, null)
         service_accounts = try(v.automation.service_accounts, {})
-      } if try(v.automation.bucket, null) != null
+      } if try(v.automation.bucket, null) != null || try(v.automation.service_accounts, null) != null
     }
   )
   _automation_buckets = {
     for k, v in local._automation : k => merge(v.bucket, {
-      automation_project = v.project
-      parent_name        = v.parent_name
-      name               = lookup(v.bucket, "name", "tf-state")
-      create             = lookup(v.bucket, "create", true)
+      automation_project    = v.project
+      parent_name           = v.parent_name
+      name                  = lookup(v.bucket, "name", "tf-state")
+      create                = lookup(v.bucket, "create", true)
+      lifecycle_rules       = lookup(v.bucket, "lifecycle_rules", {})
+      retention_policy      = lookup(v.bucket, "retention_policy", null)
+      soft_delete_retention = lookup(v.bucket, "soft_delete_retention", null)
+      logging_config        = lookup(v.bucket, "logging_config", null)
       prefix = try(coalesce(
         local.data_defaults.overrides.prefix,
         v.prefix,
         local.data_defaults.defaults.prefix
       ), null)
-    })
+    }) if v.bucket != null
   }
   _automation_sas = flatten(concat([
     for k, v in local._automation : [
@@ -56,9 +60,9 @@ locals {
         automation_project = v.project
         name               = sk
         parent             = k
-        parent_name        = v.parent_name
+        prefix             = try(sv.prefix, v.parent_name)
       })
-    ]
+    ] if v.service_accounts != null
   ]))
   automation_buckets = {
     for k, v in local._automation_buckets :
@@ -92,18 +96,20 @@ module "automation-bucket" {
     local.data_defaults.defaults.force_destroy,
   ), null)
   context = merge(local.ctx, {
-    project_ids    = local.ctx_project_ids
-    iam_principals = local.ctx_iam_principals
+    project_ids     = local.ctx_project_ids
+    iam_principals  = local.ctx_iam_principals
+    storage_buckets = local.ctx.storage_buckets
   })
   iam                   = lookup(each.value, "iam", {})
   iam_bindings          = lookup(each.value, "iam_bindings", {})
   iam_bindings_additive = lookup(each.value, "iam_bindings_additive", {})
   labels                = lookup(each.value, "labels", {})
+  lifecycle_rules       = each.value.lifecycle_rules
   managed_folders       = lookup(each.value, "managed_folders", {})
   location = each.value.create == false ? null : coalesce(
-    local.data_defaults.overrides.storage_location,
+    local.data_defaults.overrides.locations.storage,
     lookup(each.value, "location", null),
-    local.data_defaults.defaults.storage_location
+    local.data_defaults.defaults.locations.storage
   )
   storage_class = lookup(
     each.value, "storage_class", "STANDARD"
@@ -114,13 +120,16 @@ module "automation-bucket" {
   versioning = lookup(
     each.value, "versioning", false
   )
+  retention_policy      = each.value.retention_policy
+  soft_delete_retention = each.value.soft_delete_retention
+  logging_config        = each.value.logging_config
 }
 
 module "automation-service-accounts" {
   source      = "../iam-service-account"
   for_each    = local.automation_sas
   project_id  = each.value.automation_project
-  prefix      = each.value.parent_name
+  prefix      = each.value.prefix
   name        = each.value.name
   description = lookup(each.value, "description", null)
   display_name = lookup(
@@ -156,10 +165,12 @@ module "automation-service-accounts-iam" {
   project_id = (
     module.automation-service-accounts[each.key].service_account.project
   )
-  name                   = module.automation-service-accounts[each.key].name
-  service_account_create = false
+  name = module.automation-service-accounts[each.key].name
+  service_account_reuse = {
+    use_data_source = false
+  }
   context = merge(local.ctx, {
-    service_account_ids = local.project_sas_ids
+    service_account_ids = local.projects_sas_ids
   })
   iam_sa_roles = lookup(each.value, "iam_sa_roles", {})
 }

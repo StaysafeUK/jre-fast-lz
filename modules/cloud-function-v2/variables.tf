@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,10 +81,46 @@ variable "bundle_config" {
   }
 }
 
+variable "context" {
+  description = "Context-specific interpolations."
+  type = object({
+    condition_vars = optional(map(map(string)), {}) # not needed here?
+    cidr_ranges    = optional(map(string), {})
+    custom_roles   = optional(map(string), {})
+    iam_principals = optional(map(string), {})
+    kms_keys       = optional(map(string), {})
+    locations      = optional(map(string), {})
+    networks       = optional(map(string), {})
+    project_ids    = optional(map(string), {})
+    subnets        = optional(map(string), {})
+    tag_values     = optional(map(string), {}) # not needed here?
+  })
+  nullable = false
+  default  = {}
+}
+
 variable "description" {
   description = "Optional description."
   type        = string
   default     = "Terraform managed."
+}
+
+variable "direct_vpc_egress" {
+  description = "Direct VPC egress configuration."
+  type = object({
+    mode       = string
+    network    = string
+    subnetwork = string
+    tags       = optional(list(string))
+  })
+  default = null
+  validation {
+    condition = var.direct_vpc_egress == null || contains(
+      ["VPC_EGRESS_ALL_TRAFFIC", "VPC_EGRESS_PRIVATE_RANGES_ONLY"],
+      try(var.direct_vpc_egress.mode, "")
+    )
+    error_message = "Direct VPC egress mode must be one of VPC_EGRESS_ALL_TRAFFIC, VPC_EGRESS_PRIVATE_RANGES_ONLY."
+  }
 }
 
 variable "docker_repository_id" {
@@ -104,21 +140,25 @@ variable "environment_variables" {
 variable "function_config" {
   description = "Cloud function configuration. Defaults to using main as entrypoint, 1 instance with 256MiB of memory, and 180 second timeout."
   type = object({
-    binary_authorization_policy = optional(string)
-    entry_point                 = optional(string, "main")
-    instance_count              = optional(number, 1)
-    memory_mb                   = optional(number, 256) # Memory in MB
-    cpu                         = optional(string, "0.166")
-    runtime                     = optional(string, "python310")
-    timeout_seconds             = optional(number, 180)
+    automatic_update_policy          = optional(bool)
+    binary_authorization_policy      = optional(string)
+    cpu                              = optional(string, "0.166")
+    entry_point                      = optional(string, "main")
+    instance_count                   = optional(number, 1)
+    max_instance_request_concurrency = optional(number)
+    memory_mb                        = optional(number, 256) # Memory in MB
+    on_deploy_update_policy          = optional(bool)
+    runtime                          = optional(string, "python310")
+    timeout_seconds                  = optional(number, 180)
   })
-  default = {
-    entry_point     = "main"
-    instance_count  = 1
-    memory_mb       = 256
-    cpu             = "0.166"
-    runtime         = "python310"
-    timeout_seconds = 180
+  default  = {}
+  nullable = false
+  validation {
+    condition = !(
+      coalesce(var.function_config.automatic_update_policy, false) &&
+      coalesce(var.function_config.on_deploy_update_policy, false)
+    )
+    error_message = "Cannot set both automatic_update_policy and on_deploy_update_policy to true."
   }
 }
 
@@ -183,18 +223,6 @@ variable "secrets" {
   default  = {}
 }
 
-variable "service_account" {
-  description = "Service account email. Unused if service account is auto-created."
-  type        = string
-  default     = null
-}
-
-variable "service_account_create" {
-  description = "Auto-create service account."
-  type        = bool
-  default     = false
-}
-
 variable "trigger_config" {
   description = "Function trigger configuration. Leave null for HTTP trigger."
   type = object({
@@ -216,35 +244,9 @@ variable "trigger_config" {
 variable "vpc_connector" {
   description = "VPC connector configuration. Set create to 'true' if a new connector needs to be created."
   type = object({
-    create          = optional(bool, false)
     name            = optional(string)
     egress_settings = optional(string)
   })
   nullable = false
   default  = {}
-}
-
-variable "vpc_connector_config" {
-  description = "VPC connector network configuration. Must be provided if new VPC connector is being created."
-  type = object({
-    ip_cidr_range = string
-    network       = string
-    instances = optional(object({
-      max = optional(number)
-      min = optional(number, 2)
-    }))
-    throughput = optional(object({
-      max = optional(number, 300)
-      min = optional(number, 200)
-    }))
-  })
-  default = null
-  validation {
-    condition = (
-      var.vpc_connector_config == null ||
-      try(var.vpc_connector_config.instances, null) != null ||
-      try(var.vpc_connector_config.throughput, null) != null
-    )
-    error_message = "VPC connector must specify either instances or throughput."
-  }
 }

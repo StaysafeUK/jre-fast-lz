@@ -23,17 +23,19 @@ resource "google_container_cluster" "cluster" {
   node_locations = (
     length(var.node_locations) == 0 ? null : var.node_locations
   )
-  min_master_version       = var.min_master_version
-  network                  = var.vpc_config.network
-  subnetwork               = var.vpc_config.subnetwork
-  resource_labels          = var.labels
-  enable_multi_networking  = var.enable_features.multi_networking
-  enable_l4_ilb_subsetting = var.enable_features.l4_ilb_subsetting
-  enable_tpu               = var.enable_features.tpu
-  initial_node_count       = 1
-  enable_autopilot         = true
-  allow_net_admin          = var.enable_features.allow_net_admin
-  deletion_protection      = var.deletion_protection
+  min_master_version                       = var.min_master_version
+  network                                  = var.vpc_config.network
+  subnetwork                               = var.vpc_config.subnetwork
+  resource_labels                          = var.labels
+  enable_multi_networking                  = var.enable_features.multi_networking
+  enable_l4_ilb_subsetting                 = var.enable_features.l4_ilb_subsetting
+  enable_tpu                               = var.enable_features.tpu
+  initial_node_count                       = 1
+  enable_autopilot                         = true
+  allow_net_admin                          = var.enable_features.allow_net_admin
+  deletion_protection                      = var.deletion_protection
+  enable_cilium_clusterwide_network_policy = var.enable_features.cilium_clusterwide_network_policy
+  enable_fqdn_network_policy               = var.enable_features.fqdn_network_policy
 
   addons_config {
     # HTTP Load Balancing is required to be enabled in Autopilot clusters
@@ -84,7 +86,9 @@ resource "google_container_cluster" "cluster" {
   }
   control_plane_endpoints_config {
     dns_endpoint_config {
-      allow_external_traffic = var.access_config.dns_access == true
+      allow_external_traffic    = var.access_config.dns_access.allow_external_traffic == true
+      enable_k8s_tokens_via_dns = var.access_config.dns_access.enable_k8s_tokens
+      enable_k8s_certs_via_dns  = var.access_config.dns_access.enable_k8s_certs
     }
     ip_endpoints_config {
       enabled = var.access_config.ip_access != null
@@ -116,6 +120,12 @@ resource "google_container_cluster" "cluster" {
     for_each = var.enable_features.beta_apis != null ? [""] : []
     content {
       enabled_apis = var.enable_features.beta_apis
+    }
+  }
+  dynamic "fleet" {
+    for_each = var.fleet_project != null ? [""] : []
+    content {
+      project = var.fleet_project
     }
   }
   dynamic "gateway_api_config" {
@@ -282,7 +292,7 @@ resource "google_container_cluster" "cluster" {
   }
   node_pool_auto_config {
     node_kubelet_config {
-      insecure_kubelet_readonly_port_enabled = upper(var.node_config.kubelet_readonly_port_enabled)
+      insecure_kubelet_readonly_port_enabled = try(upper(var.node_config.kubelet_readonly_port_enabled), null)
     }
     dynamic "network_tags" {
       for_each = var.node_config.tags != null ? [""] : []
@@ -324,10 +334,30 @@ resource "google_container_cluster" "cluster" {
       enabled = var.enable_features.pod_security_policy
     }
   }
+  dynamic "rbac_binding_config" {
+    for_each = var.enable_features.rbac_binding_config != null ? [""] : []
+    content {
+      enable_insecure_binding_system_unauthenticated = var.enable_features.rbac_binding_config.enable_insecure_binding_system_unauthenticated
+      enable_insecure_binding_system_authenticated   = var.enable_features.rbac_binding_config.enable_insecure_binding_system_authenticated
+    }
+  }
   dynamic "secret_manager_config" {
     for_each = var.enable_features.secret_manager_config != null ? [""] : []
     content {
       enabled = var.enable_features.secret_manager_config
+    }
+  }
+  dynamic "secret_sync_config" {
+    for_each = var.enable_features.secret_sync_config != null ? [""] : []
+    content {
+      enabled = var.enable_features.secret_sync_config.enabled
+      dynamic "rotation_config" {
+        for_each = try(var.enable_features.secret_sync_config.rotation_config, null) != null ? [""] : []
+        content {
+          enabled           = var.enable_features.secret_sync_config.rotation_config.enabled
+          rotation_interval = var.enable_features.secret_sync_config.rotation_config.rotation_interval
+        }
+      }
     }
   }
   dynamic "security_posture_config" {
@@ -425,4 +455,5 @@ resource "google_pubsub_topic" "notifications" {
   labels = {
     content = "gke-notifications"
   }
+  kms_key_name = try(var.enable_features.upgrade_notifications.kms_key_name, null)
 }

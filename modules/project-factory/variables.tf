@@ -19,15 +19,26 @@ variable "context" {
   type = object({
     condition_vars        = optional(map(map(string)), {})
     custom_roles          = optional(map(string), {})
+    email_addresses       = optional(map(string), {})
     folder_ids            = optional(map(string), {})
     iam_principals        = optional(map(string), {})
     kms_keys              = optional(map(string), {})
     locations             = optional(map(string), {})
+    log_buckets           = optional(map(string), {})
+    networks              = optional(map(string), {})
     notification_channels = optional(map(string), {})
     project_ids           = optional(map(string), {})
+    project_numbers       = optional(map(string), {})
+    pubsub_topics         = optional(map(string), {})
+    storage_buckets       = optional(map(string), {})
+    tag_keys              = optional(map(string), {})
     tag_values            = optional(map(string), {})
-    vpc_host_projects     = optional(map(string), {})
-    vpc_sc_perimeters     = optional(map(string), {})
+    tag_vars = optional(object({
+      projects     = optional(map(map(string)), {})
+      organization = optional(map(string), {})
+    }), {})
+    vpc_host_projects = optional(map(string), {})
+    vpc_sc_perimeters = optional(map(string), {})
   })
   default  = {}
   nullable = false
@@ -42,18 +53,12 @@ variable "data_defaults" {
     }), {})
     contacts        = optional(map(list(string)), {})
     deletion_policy = optional(string)
-    factories_config = optional(object({
-      custom_roles  = optional(string)
-      observability = optional(string)
-      org_policies  = optional(string)
-      quotas        = optional(string)
+    labels          = optional(map(string), {})
+    locations = optional(object({
+      bigquery = optional(string)
+      logging  = optional(string)
+      storage  = optional(string)
     }), {})
-    labels = optional(map(string), {})
-    logging_data_access = optional(map(object({
-      ADMIN_READ = optional(object({ exempted_members = optional(list(string)) })),
-      DATA_READ  = optional(object({ exempted_members = optional(list(string)) })),
-      DATA_WRITE = optional(object({ exempted_members = optional(list(string)) }))
-    })), {})
     metric_scopes = optional(list(string), [])
     parent        = optional(string)
     prefix        = optional(string)
@@ -88,8 +93,7 @@ variable "data_defaults" {
       service_iam_grants       = optional(list(string), [])
       network_subnet_users     = optional(map(list(string)), {})
     }))
-    storage_location = optional(string)
-    tag_bindings     = optional(map(string), {})
+    tag_bindings = optional(map(string), {})
     universe = optional(object({
       prefix                         = string
       forced_jit_service_identities  = optional(list(string), [])
@@ -100,7 +104,6 @@ variable "data_defaults" {
       perimeter_name = string
       is_dry_run     = optional(bool, false)
     }))
-    bigquery_location = optional(string)
   })
   nullable = false
   default  = {}
@@ -135,17 +138,11 @@ variable "data_overrides" {
     }), {})
     contacts        = optional(map(list(string)))
     deletion_policy = optional(string)
-    factories_config = optional(object({
-      custom_roles  = optional(string)
-      observability = optional(string)
-      org_policies  = optional(string)
-      quotas        = optional(string)
+    locations = optional(object({
+      bigquery = optional(string)
+      logging  = optional(string)
+      storage  = optional(string)
     }), {})
-    logging_data_access = optional(map(object({
-      ADMIN_READ = optional(object({ exempted_members = optional(list(string)) })),
-      DATA_READ  = optional(object({ exempted_members = optional(list(string)) })),
-      DATA_WRITE = optional(object({ exempted_members = optional(list(string)) }))
-    })))
     parent = optional(string)
     prefix = optional(string)
     service_accounts = optional(map(object({
@@ -154,7 +151,6 @@ variable "data_overrides" {
     })))
     service_encryption_key_ids = optional(map(list(string)))
     services                   = optional(list(string))
-    storage_location           = optional(string)
     tag_bindings               = optional(map(string))
     universe = optional(object({
       prefix                         = string
@@ -166,7 +162,6 @@ variable "data_overrides" {
       perimeter_name = string
       is_dry_run     = optional(bool, false)
     }))
-    bigquery_location = optional(string)
   })
   nullable = false
   default  = {}
@@ -175,13 +170,16 @@ variable "data_overrides" {
 variable "factories_config" {
   description = "Path to folder with YAML resource description data files."
   type = object({
-    folders           = optional(string)
-    project_templates = optional(string)
-    projects          = optional(string)
+    basepath = string
     budgets = optional(object({
-      billing_account_id = string
-      data               = string
-    }))
+      billing_account = optional(string)
+    }), {})
+    paths = optional(object({
+      budgets           = optional(string, "budgets")
+      folders           = optional(string, "folders")
+      project_templates = optional(string, "project-templates")
+      projects          = optional(string, "projects")
+    }), {})
   })
   nullable = false
 }

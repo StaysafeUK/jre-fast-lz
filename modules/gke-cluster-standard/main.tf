@@ -47,7 +47,7 @@ resource "google_container_cluster" "cluster" {
   datapath_provider = (
     var.enable_features.dataplane_v2
     ? "ADVANCED_DATAPATH"
-    : "DATAPATH_PROVIDER_UNSPECIFIED"
+    : "LEGACY_DATAPATH"
   )
 
   dynamic "default_snat_status" {
@@ -83,7 +83,7 @@ resource "google_container_cluster" "cluster" {
   # gcfs_config deactivation need the block to be defined so it can't be dynamic
   node_pool_defaults {
     node_config_defaults {
-      insecure_kubelet_readonly_port_enabled = upper(var.node_config.kubelet_readonly_port_enabled)
+      insecure_kubelet_readonly_port_enabled = try(upper(var.node_config.kubelet_readonly_port_enabled), null)
       gcfs_config {
         enabled = var.enable_features.image_streaming
       }
@@ -92,12 +92,15 @@ resource "google_container_cluster" "cluster" {
   dynamic "node_pool_auto_config" {
     for_each = try(local.cas.enabled, null) == true ? [""] : []
     content {
-      network_tags {
-        tags = var.node_pool_auto_config.network_tags
+      dynamic "network_tags" {
+        for_each = length(var.node_pool_auto_config.network_tags) > 0 ? [""] : []
+        content {
+          tags = var.node_pool_auto_config.network_tags
+        }
       }
       resource_manager_tags = var.node_pool_auto_config.resource_manager_tags
       node_kubelet_config {
-        insecure_kubelet_readonly_port_enabled = upper(var.node_pool_auto_config.kubelet_readonly_port_enabled)
+        insecure_kubelet_readonly_port_enabled = try(upper(var.node_pool_auto_config.kubelet_readonly_port_enabled), null)
       }
       linux_node_config {
         cgroup_mode = var.node_pool_auto_config.cgroup_mode
@@ -270,7 +273,9 @@ resource "google_container_cluster" "cluster" {
   }
   control_plane_endpoints_config {
     dns_endpoint_config {
-      allow_external_traffic = var.access_config.dns_access == true
+      allow_external_traffic    = var.access_config.dns_access.allow_external_traffic == true
+      enable_k8s_tokens_via_dns = var.access_config.dns_access.enable_k8s_tokens
+      enable_k8s_certs_via_dns  = var.access_config.dns_access.enable_k8s_certs
     }
     ip_endpoints_config {
       enabled = var.access_config.ip_access != null
@@ -296,6 +301,12 @@ resource "google_container_cluster" "cluster" {
     for_each = var.enable_features.beta_apis != null ? [""] : []
     content {
       enabled_apis = var.enable_features.beta_apis
+    }
+  }
+  dynamic "fleet" {
+    for_each = var.fleet_project != null ? [""] : []
+    content {
+      project = var.fleet_project
     }
   }
   dynamic "gateway_api_config" {
@@ -542,10 +553,30 @@ resource "google_container_cluster" "cluster" {
       enabled = var.enable_features.pod_security_policy
     }
   }
+  dynamic "rbac_binding_config" {
+    for_each = var.enable_features.rbac_binding_config != null ? [""] : []
+    content {
+      enable_insecure_binding_system_unauthenticated = var.enable_features.rbac_binding_config.enable_insecure_binding_system_unauthenticated
+      enable_insecure_binding_system_authenticated   = var.enable_features.rbac_binding_config.enable_insecure_binding_system_authenticated
+    }
+  }
   dynamic "secret_manager_config" {
     for_each = var.enable_features.secret_manager_config != null ? [""] : []
     content {
       enabled = var.enable_features.secret_manager_config
+    }
+  }
+  dynamic "secret_sync_config" {
+    for_each = var.enable_features.secret_sync_config != null ? [""] : []
+    content {
+      enabled = var.enable_features.secret_sync_config.enabled
+      dynamic "rotation_config" {
+        for_each = try(var.enable_features.secret_sync_config.rotation_config, null) != null ? [""] : []
+        content {
+          enabled           = var.enable_features.secret_sync_config.rotation_config.enabled
+          rotation_interval = var.enable_features.secret_sync_config.rotation_config.rotation_interval
+        }
+      }
     }
   }
   dynamic "security_posture_config" {
@@ -676,4 +707,5 @@ resource "google_pubsub_topic" "notifications" {
   labels = {
     content = "gke-notifications"
   }
+  kms_key_name = try(var.enable_features.upgrade_notifications.kms_key_name, null)
 }

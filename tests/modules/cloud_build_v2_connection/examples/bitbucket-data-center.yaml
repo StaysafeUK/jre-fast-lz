@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# yamllint disable rule:line-length
 values:
   module.cb_connection.google_cloudbuild_trigger.triggers["my-repository-my-trigger"]:
     bitbucket_server_trigger_config: []
@@ -39,7 +40,7 @@ values:
     service_account: null
     source_to_build: []
     substitutions: null
-    tags: null
+    tags: []
     timeouts: null
     trigger_template: []
     webhook_config: []

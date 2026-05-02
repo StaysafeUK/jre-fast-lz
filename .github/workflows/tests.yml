@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 
 name: "Tests"
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
@@ -38,12 +39,14 @@ env:
   TFTEST_COPY: 1
   DEFAULT_TERRAFORM_FLAVOUR: terraform
   DEFAULT_TERRAFORM_VERSION: ${{ inputs.terraform_version || '1.12.2' }}
-  DEFAULT_TOFU_VERSION: "1.10.0"
+  DEFAULT_TOFU_VERSION: "1.11.0"
 
 jobs:
   setup-tf-providers:
     runs-on: ubuntu-latest
+    continue-on-error: true  # run terraform tests, even if setup for tofu fails
     strategy:
+      fail-fast: false
       matrix:
         include:
           - flavour: terraform
@@ -54,7 +57,7 @@ jobs:
         run: |
           set -e -o xtrace
           if [[ ${{ matrix.flavour }} == 'terraform' ]] ; then
-            echo TERRAFORM_VERSION=${{ env.DEFAULT_TERRAFORM_VERSION }} | tee -a ${GITHUB_ENV}
+            echo TERRAFORM_VERSION=${DEFAULT_TERRAFORM_VERSION} | tee -a ${GITHUB_ENV}
           elif [[ ${{ matrix.flavour }} == 'tofu' ]] ; then
             echo TERRAFORM_VERSION=${{ env.DEFAULT_TOFU_VERSION  }} | tee -a ${GITHUB_ENV}
           else
@@ -82,7 +85,8 @@ jobs:
           sed -i -e 's/>=\(.*# tftest\)/=\1/g' tools/lockfile/versions.tf tools/lockfile/versions.tofu
 
           # change terraform version to the one that is running
-          sed -i 's/required_version = .*$/required_version = ">= ${{ env.TERRAFORM_VERSION  }}"/g' tools/lockfile/versions.tf
+          sed -i "s/required_version = .\*$/required_version = \">= ${TERRAFORM_VERSION}\"/g" \
+            tools/lockfile/versions.tf
 
           cd tools/lockfile
           ${{ matrix.flavour }} init -upgrade=true
@@ -91,6 +95,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          # yamllint disable-line rule:line-length
           key: ${{ runner.os }}-${{ matrix.flavour }}-${{ env.TERRAFORM_VERSION }}-${{ hashFiles('tools/lockfile/.terraform.lock.hcl') }}
 
       - name: Upload lockfile
@@ -128,6 +133,7 @@ jobs:
     needs:
       - setup-tf-providers
     strategy:
+      fail-fast: false
       matrix:
         include:
           - flavour: terraform
@@ -139,7 +145,7 @@ jobs:
         run: |
           set -e -o xtrace
           if [[ ${{ matrix.flavour }} == 'terraform' ]] ; then
-            echo TERRAFORM_VERSION=${{ env.DEFAULT_TERRAFORM_VERSION }} | tee -a ${GITHUB_ENV}
+            echo TERRAFORM_VERSION=${DEFAULT_TERRAFORM_VERSION} | tee -a ${GITHUB_ENV}
           elif [[ ${{ matrix.flavour }} == 'tofu' ]] ; then
             echo TERRAFORM_VERSION=${{ env.DEFAULT_TOFU_VERSION  }} | tee -a ${GITHUB_ENV}
           else
@@ -156,7 +162,9 @@ jobs:
       - name: Run tests on documentation examples
         env:
           TERRAFORM: ${{ matrix.flavour }}
-        run: pytest -vv ${{ matrix.flavour == 'terraform' && '-n4' || '-n4' }} --tb=line --junit-xml=test-results-raw.xml -k "terraform and modules/" tests/examples
+        run: |
+          pytest -vv ${{ matrix.flavour == 'terraform' && '-n4' || '-n4' }} --tb=line \
+            --junit-xml=test-results-raw.xml -k "terraform and modules/" tests/examples
 
       - name: Create report
         uses: ./.github/actions/post-fabric-tests
@@ -169,6 +177,7 @@ jobs:
     needs:
       - setup-tf-providers
     strategy:
+      fail-fast: false
       matrix:
         include:
           - flavour: terraform
@@ -180,7 +189,7 @@ jobs:
         run: |
           set -e -o xtrace
           if [[ ${{ matrix.flavour }} == 'terraform' ]] ; then
-            echo TERRAFORM_VERSION=${{ env.DEFAULT_TERRAFORM_VERSION }} | tee -a ${GITHUB_ENV}
+            echo TERRAFORM_VERSION=${DEFAULT_TERRAFORM_VERSION} | tee -a ${GITHUB_ENV}
           elif [[ ${{ matrix.flavour }} == 'tofu' ]] ; then
             echo TERRAFORM_VERSION=${{ env.DEFAULT_TOFU_VERSION  }} | tee -a ${GITHUB_ENV}
           else
@@ -199,7 +208,9 @@ jobs:
       - name: Run tests modules
         env:
           TERRAFORM: ${{ matrix.flavour }}
-        run: pytest -vv ${{ matrix.flavour == 'terraform' && '-n4' || '-n4' }} --tb=line --junit-xml=test-results-raw.xml tests/modules
+        run: |
+          pytest -vv ${{ matrix.flavour == 'terraform' && '-n4' || '-n4' }} --tb=line \
+            --junit-xml=test-results-raw.xml tests/modules
 
       - name: Create report
         uses: ./.github/actions/post-fabric-tests
@@ -211,17 +222,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup-tf-providers
     strategy:
+      fail-fast: false
       matrix:
         include:
-        - flavour: terraform
-        # - flavour: tofu # tofu fails to find the terraform binary for FAST tests
+          - flavour: terraform
+          # - flavour: tofu # tofu fails to find the terraform binary for FAST tests
     steps:
       - uses: actions/checkout@v4
       - name: Set Terraform versions
         run: |
           set -e -o xtrace
           if [[ ${{ matrix.flavour }} == 'terraform' ]] ; then
-            echo TERRAFORM_VERSION=${{ env.DEFAULT_TERRAFORM_VERSION }} | tee -a ${GITHUB_ENV}
+            echo TERRAFORM_VERSION=${DEFAULT_TERRAFORM_VERSION} | tee -a ${GITHUB_ENV}
           elif [[ ${{ matrix.flavour }} == 'tofu' ]] ; then
             echo TERRAFORM_VERSION=${{ env.DEFAULT_TOFU_VERSION  }} | tee -a ${GITHUB_ENV}
           else
@@ -258,7 +270,9 @@ jobs:
           TERRAFORM_FLAVOUR: ${{ env.DEFAULT_TERRAFORM_FLAVOUR }}
 
       - name: Run schema tests
-        run: pytest -vv --tb=line --junit-xml=test-results-raw.xml -k "(tests and schemas) or (fast and schema) or (examples and yaml)"
+        run: |
+          pytest -vv --tb=line --junit-xml=test-results-raw.xml \
+            -k "(tests and schemas) or (fast and schema) or (examples and yaml)"
 
       - name: Create report
         uses: ./.github/actions/post-fabric-tests

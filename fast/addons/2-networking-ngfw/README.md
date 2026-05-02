@@ -30,22 +30,78 @@ The controlling project is usually one of those already created and managed by t
 
 ## How to run this stage
 
-Once the main networking stage has been configured and applied, the following configuration is added the the resource management `fast_addon` variable to create the add-on provider files, and its optional CI/CD resources if those are also required. The add-on name (`networking-ngfw`) is customizable, in case the add-on needs to be run multiple times for example to create different sets of endpoints and NGFW configurations per environment.
+Once the main networking stage has been configured and applied, the following configuration is added to the org setup stage.
 
-```hcl
-fast_addon = {
-  networking-ngfw = {
-    parent_stage = "2-networking"
-    # cicd_config = {
-    #   identity_provider = "github-test"
-    #   repository = {
-    #     name   = "test/ngfw"
-    #     type   = "github"
-    #     branch = "main"
-    #   }
-    # }
-  }
-}
+First, the new provider file is declared in the `defaults.yaml` file.
+
+```yaml
+# defaults.yaml (snippet)
+
+output_files:
+  # ...
+  providers:
+    # ...
+    2-networking-ngfw:
+      bucket: $storage_buckets:iac-0/iac-stage-state
+      prefix: 2-networking-ngfw
+      service_account: $iam_principals:service_accounts/iac-0/iac-networking-rw
+
+```
+
+Then, the GCS folder (shown here) or bucket for the Terraform state is defined in the IaC project.
+
+```yaml
+# projects/iac-0.yaml
+buckets:
+  # ...
+  iac-stage-state:
+    description: Terraform state for stage automation.
+    managed_folders:
+      # ...
+      2-networking-ngfw:
+        iam:
+          roles/storage.admin:
+            - $iam_principals:service_accounts/iac-0/iac-networking-rw
+          $custom_roles:storage_viewer:
+            - $iam_principals:service_accounts/iac-0/iac-networking-ro
+
+```
+
+And finally, grant extra roles at the organization level to the networking service accounts.
+
+```yaml
+# organization/.config.yaml
+iam_by_principals:
+  # ...
+  $iam_principals:service_accounts/iac-0/iac-networking-rw:
+    - roles/compute.orgFirewallPolicyAdmin
+    - roles/compute.xpnAdmin
+    # add the custom role
+    - $custom_roles:ngfw_enterprise_admin
+  $iam_principals:service_accounts/iac-0/iac-networking-ro:
+    - roles/compute.orgFirewallPolicyUser
+    - roles/compute.viewer
+    # add the custom role
+    - $custom_roles:ngfw_enterprise_viewer
+```
+
+If VPC-SC is used, an additional ingress policy needs to be added to the perimeter to allow the NGFW service agent to reach the Certificate Authority Service. Edit and enable the following policy.
+
+```yaml
+from:
+  access_levels:
+    - "*"
+  identities:
+    # TODO: change to actual NGFW service identity
+    - serviceAccount:service-1234567890@gcp-sa-networksecurity.iam.gserviceaccount.com
+to:
+  operations:
+    - method_selectors:
+        - "*"
+      service_name: privateca.googleapis.com
+  resources:
+    # TODO: change to project number where CAS lives
+    - projects/1234567890
 ```
 
 ### Provider and Terraform variables
@@ -64,7 +120,6 @@ ln -s ~/fast-config/providers/2-networking-ngfw-providers.tf ./
 # input files from other stages
 ln -s ~/fast-config/tfvars/0-globals.auto.tfvars.json ./
 ln -s ~/fast-config/tfvars/0-org-setup.auto.tfvars.json ./
-ln -s ~/fast-config/tfvars/1-resman.auto.tfvars.json ./
 ln -s ~/fast-config/tfvars/2-networking.auto.tfvars.json ./
 
 # conventional place for stage tfvars (manually created)
@@ -83,7 +138,7 @@ The preconfigured provider file uses impersonation to run with this stage's auto
 Variables in this stage -- like most other FAST stages -- are broadly divided into three separate sets:
 
 - variables which refer to global values for the whole organization (org id, billing account id, prefix, etc.), which are pre-populated via the `0-globals.auto.tfvars.json` file linked or copied above
-- variables which refer to resources managed by previous stages, which are prepopulated here via the `0-org-setup.auto.tfvars.json`, `1-resman.auto.tfvars.json` and `2-networking.auto.tfvars.json` files linked or copied above
+- variables which refer to resources managed by previous stages, which are prepopulated here via the `0-org-setup.auto.tfvars.json`, `2-networking.auto.tfvars.json` files linked or copied above
 - and finally variables that optionally control this stage's behaviour and customizations, and can to be set in a custom `terraform.tfvars` file
 
 The first two sets are defined in the `variables-fast.tf` file, the latter set in the `variables.tf` file. The full list of variables can be found in the [Variables](#variables) table at the bottom of this document.
@@ -141,6 +196,18 @@ security_profiles = {
           action    = "ALLOW"
           threat_id = "280647"
         }
+      }
+    }
+    url_filtering_profile = {
+      allow-example = {
+        action   = "ALLOW"
+        priority = 100
+        urls     = ["example.com"]
+      }
+      deny-all = {
+        action   = "DENY"
+        priority = 200
+        # urls defaults to ["*"]
       }
     }
   }
@@ -205,19 +272,19 @@ Security profiles group defined here are exported via output variable file, and 
 
 | name | description | type | required | default | producer |
 |---|---|:---:|:---:|:---:|:---:|
-| [automation](variables-fast.tf#L28) | Automation resources created by the bootstrap stage. | <code title="object&#40;&#123;&#10;  outputs_bucket &#61; string&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> | ✓ |  | <code>0-bootstrap</code> |
-| [ngfw_config](variables.tf#L113) | Configuration for NGFW Enterprise endpoints. Billing project defaults to the automation project. Network and TLS inspection policy ids support interpolation. | <code title="object&#40;&#123;&#10;  endpoint_zones &#61; list&#40;string&#41;&#10;  name           &#61; optional&#40;string, &#34;ngfw-0&#34;&#41;&#10;  network_associations &#61; optional&#40;map&#40;object&#40;&#123;&#10;    vpc_id                &#61; string&#10;    disabled              &#61; optional&#40;bool&#41;&#10;    tls_inspection_policy &#61; optional&#40;string&#41;&#10;    zones                 &#61; optional&#40;list&#40;string&#41;&#41;&#10;  &#125;&#41;&#41;, &#123;&#125;&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> | ✓ |  |  |
-| [organization](variables-fast.tf#L56) | Organization details. | <code title="object&#40;&#123;&#10;  domain      &#61; string&#10;  id          &#61; number&#10;  customer_id &#61; string&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> | ✓ |  | <code>0-globals</code> |
+| [automation](variables-fast.tf#L28) | Automation resources created by the bootstrap stage. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> | ✓ |  | <code>0-bootstrap</code> |
+| [ngfw_config](variables.tf#L113) | Configuration for NGFW Enterprise endpoints. Billing project defaults to the automation project. Network and TLS inspection policy ids support interpolation. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> | ✓ |  |  |
+| [organization](variables-fast.tf#L56) | Organization details. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> | ✓ |  | <code>0-globals</code> |
 | [project_id](variables.tf#L134) | Project where the network security resources will be created. | <code>string</code> | ✓ |  |  |
-| [_fast_debug](variables-fast.tf#L19) | Internal FAST variable used for testing and debugging. Do not use. | <code title="object&#40;&#123;&#10;  skip_datasources &#61; optional&#40;bool, false&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |  |
-| [certificate_authorities](variables.tf#L17) | Certificate Authority Service pool and CAs. If host project ids is null identical pools and CAs are created in every host project. | <code title="map&#40;object&#40;&#123;&#10;  location              &#61; string&#10;  iam                   &#61; optional&#40;map&#40;list&#40;string&#41;&#41;, &#123;&#125;&#41;&#10;  iam_bindings          &#61; optional&#40;map&#40;any&#41;, &#123;&#125;&#41;&#10;  iam_bindings_additive &#61; optional&#40;map&#40;any&#41;, &#123;&#125;&#41;&#10;  iam_by_principals     &#61; optional&#40;map&#40;list&#40;string&#41;&#41;, &#123;&#125;&#41;&#10;  ca_configs &#61; map&#40;object&#40;&#123;&#10;    deletion_protection                    &#61; optional&#40;string, true&#41;&#10;    type                                   &#61; optional&#40;string, &#34;SELF_SIGNED&#34;&#41;&#10;    is_ca                                  &#61; optional&#40;bool, true&#41;&#10;    lifetime                               &#61; optional&#40;string, null&#41;&#10;    pem_ca_certificate                     &#61; optional&#40;string, null&#41;&#10;    ignore_active_certificates_on_deletion &#61; optional&#40;bool, false&#41;&#10;    skip_grace_period                      &#61; optional&#40;bool, true&#41;&#10;    labels                                 &#61; optional&#40;map&#40;string&#41;, null&#41;&#10;    gcs_bucket                             &#61; optional&#40;string, null&#41;&#10;    key_spec &#61; optional&#40;object&#40;&#123;&#10;      algorithm  &#61; optional&#40;string, &#34;RSA_PKCS1_2048_SHA256&#34;&#41;&#10;      kms_key_id &#61; optional&#40;string, null&#41;&#10;    &#125;&#41;, &#123;&#125;&#41;&#10;    key_usage &#61; optional&#40;object&#40;&#123;&#10;      cert_sign          &#61; optional&#40;bool, true&#41;&#10;      client_auth        &#61; optional&#40;bool, false&#41;&#10;      code_signing       &#61; optional&#40;bool, false&#41;&#10;      content_commitment &#61; optional&#40;bool, false&#41;&#10;      crl_sign           &#61; optional&#40;bool, true&#41;&#10;      data_encipherment  &#61; optional&#40;bool, false&#41;&#10;      decipher_only      &#61; optional&#40;bool, false&#41;&#10;      digital_signature  &#61; optional&#40;bool, false&#41;&#10;      email_protection   &#61; optional&#40;bool, false&#41;&#10;      encipher_only      &#61; optional&#40;bool, false&#41;&#10;      key_agreement      &#61; optional&#40;bool, false&#41;&#10;      key_encipherment   &#61; optional&#40;bool, true&#41;&#10;      ocsp_signing       &#61; optional&#40;bool, false&#41;&#10;      server_auth        &#61; optional&#40;bool, true&#41;&#10;      time_stamping      &#61; optional&#40;bool, false&#41;&#10;    &#125;&#41;, &#123;&#125;&#41;&#10;    subject &#61; optional&#40;&#10;      object&#40;&#123;&#10;        common_name         &#61; string&#10;        organization        &#61; string&#10;        country_code        &#61; optional&#40;string&#41;&#10;        locality            &#61; optional&#40;string&#41;&#10;        organizational_unit &#61; optional&#40;string&#41;&#10;        postal_code         &#61; optional&#40;string&#41;&#10;        province            &#61; optional&#40;string&#41;&#10;        street_address      &#61; optional&#40;string&#41;&#10;      &#125;&#41;,&#10;      &#123;&#10;        common_name  &#61; &#34;test.example.com&#34;&#10;        organization &#61; &#34;Test Example&#34;&#10;      &#125;&#10;    &#41;&#10;    subject_alt_name &#61; optional&#40;object&#40;&#123;&#10;      dns_names       &#61; optional&#40;list&#40;string&#41;, null&#41;&#10;      email_addresses &#61; optional&#40;list&#40;string&#41;, null&#41;&#10;      ip_addresses    &#61; optional&#40;list&#40;string&#41;, null&#41;&#10;      uris            &#61; optional&#40;list&#40;string&#41;, null&#41;&#10;    &#125;&#41;, null&#41;&#10;    subordinate_config &#61; optional&#40;object&#40;&#123;&#10;      root_ca_id              &#61; optional&#40;string&#41;&#10;      pem_issuer_certificates &#61; optional&#40;list&#40;string&#41;&#41;&#10;    &#125;&#41;, null&#41;&#10;  &#125;&#41;&#41;&#10;  ca_pool_config &#61; optional&#40;object&#40;&#123;&#10;    create_pool &#61; optional&#40;object&#40;&#123;&#10;      name &#61; optional&#40;string&#41;&#10;      tier &#61; optional&#40;string, &#34;DEVOPS&#34;&#41;&#10;    &#125;&#41;&#41;&#10;    use_pool &#61; optional&#40;object&#40;&#123;&#10;      id &#61; string&#10;    &#125;&#41;&#41;&#10;  &#125;&#41;&#41;&#10;&#125;&#41;&#41;">map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#125;</code> |  |
-| [certificate_authority_pools](variables-fast.tf#L36) | Certificate authority pools. | <code title="map&#40;object&#40;&#123;&#10;  id       &#61; string&#10;  ca_ids   &#61; map&#40;string&#41;&#10;  location &#61; string&#10;&#125;&#41;&#41;">map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#125;</code> | <code>2-security</code> |
+| [_fast_debug](variables-fast.tf#L19) | Internal FAST variable used for testing and debugging. Do not use. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |  |
+| [certificate_authorities](variables.tf#L17) | Certificate Authority Service pool and CAs. If host project ids is null identical pools and CAs are created in every host project. | <code>map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#125;</code> |  |
+| [certificate_authority_pools](variables-fast.tf#L36) | Certificate authority pools. | <code>map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#125;</code> | <code>2-security</code> |
 | [enable_services](variables.tf#L97) | Configure project by enabling services required for this add-on. | <code>bool</code> |  | <code>true</code> |  |
 | [host_project_ids](variables-fast.tf#L48) | Networking stage host project id aliases. | <code>map&#40;string&#41;</code> |  | <code>&#123;&#125;</code> | <code>2-networking</code> |
-| [names](variables.tf#L104) | Configuration for names used for output files. | <code title="object&#40;&#123;&#10;  output_files_prefix &#61; optional&#40;string, &#34;2-networking-ngfw&#34;&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |  |
+| [names](variables.tf#L104) | Configuration for names used for output files. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |  |
 | [outputs_location](variables.tf#L128) | Path where providers and tfvars files for the following stages are written. Leave empty to disable. | <code>string</code> |  | <code>null</code> |  |
-| [security_profiles](variables.tf#L140) | Security profile groups for Layer 7 inspection. Null environment list means all environments. | <code title="map&#40;object&#40;&#123;&#10;  description &#61; optional&#40;string&#41;&#10;  threat_prevention_profile &#61; optional&#40;object&#40;&#123;&#10;    severity_overrides &#61; optional&#40;map&#40;object&#40;&#123;&#10;      action   &#61; string&#10;      severity &#61; string&#10;    &#125;&#41;&#41;&#41;&#10;    threat_overrides &#61; optional&#40;map&#40;object&#40;&#123;&#10;      action    &#61; string&#10;      threat_id &#61; string&#10;    &#125;&#41;&#41;&#41;&#10;  &#125;&#41;, &#123;&#125;&#41;&#10;&#125;&#41;&#41;">map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code title="&#123;&#10;  ngfw-default &#61; &#123;&#125;&#10;&#125;">&#123;&#8230;&#125;</code> |  |
-| [tls_inspection_policies](variables.tf#L182) | TLS inspection policies configuration. CA pools, trust configs and host project ids support interpolation. | <code title="map&#40;object&#40;&#123;&#10;  ca_pool_id            &#61; string&#10;  location              &#61; string&#10;  exclude_public_ca_set &#61; optional&#40;bool&#41;&#10;  trust_config          &#61; optional&#40;string&#41;&#10;  tls &#61; optional&#40;object&#40;&#123;&#10;    custom_features &#61; optional&#40;list&#40;string&#41;&#41;&#10;    feature_profile &#61; optional&#40;string&#41;&#10;    min_version     &#61; optional&#40;string&#41;&#10;  &#125;&#41;, &#123;&#125;&#41;&#10;&#125;&#41;&#41;">map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#125;</code> |  |
-| [trust_configs](variables.tf#L224) | Certificate Manager trust configurations for TLS inspection policies. Project ids and region can reference keys in the relevant FAST variables. | <code title="map&#40;object&#40;&#123;&#10;  location                 &#61; string&#10;  description              &#61; optional&#40;string&#41;&#10;  allowlisted_certificates &#61; optional&#40;map&#40;string&#41;&#41;&#10;  trust_stores &#61; optional&#40;map&#40;object&#40;&#123;&#10;    intermediate_cas &#61; optional&#40;map&#40;string&#41;&#41;&#10;    trust_anchors    &#61; optional&#40;map&#40;string&#41;&#41;&#10;  &#125;&#41;&#41;&#41;&#10;&#125;&#41;&#41;">map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code title="&#123;&#10;&#125;">&#123;&#8230;&#125;</code> |  |
+| [security_profiles](variables.tf#L140) | Security profile groups for Layer 7 inspection. Null environment list means all environments. | <code>map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#8230;&#125;</code> |  |
+| [tls_inspection_policies](variables.tf#L223) | TLS inspection policies configuration. CA pools, trust configs and host project ids support interpolation. | <code>map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#125;</code> |  |
+| [trust_configs](variables.tf#L265) | Certificate Manager trust configurations for TLS inspection policies. Project ids and region can reference keys in the relevant FAST variables. | <code>map&#40;object&#40;&#123;&#8230;&#125;&#41;&#41;</code> |  | <code>&#123;&#8230;&#125;</code> |  |
 | [vpc_self_links](variables-fast.tf#L66) | VPC network self links. | <code>map&#40;string&#41;</code> |  | <code>&#123;&#125;</code> | <code>2-networking</code> |
 <!-- END TFDOC -->

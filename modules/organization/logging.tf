@@ -60,10 +60,15 @@ resource "google_logging_organization_settings" "default" {
   count                = var.logging_settings != null ? 1 : 0
   organization         = local.organization_id_numeric
   disable_default_sink = var.logging_settings.disable_default_sink
-  storage_location = lookup(
-    local.ctx.locations,
-    coalesce(var.logging_settings.storage_location, ""),
-    var.logging_settings.storage_location
+  kms_key_name = (
+    var.logging_settings.kms_key_name == null
+    ? null
+    : lookup(local.ctx.kms_keys, var.logging_settings.kms_key_name, var.logging_settings.kms_key_name)
+  )
+  storage_location = (
+    var.logging_settings.storage_location == null
+    ? null
+    : lookup(local.ctx.locations, var.logging_settings.storage_location, var.logging_settings.storage_location)
   )
 }
 
@@ -74,8 +79,11 @@ resource "google_organization_iam_audit_config" "default" {
   dynamic "audit_log_config" {
     for_each = { for k, v in each.value : k => v if v != null }
     content {
-      log_type         = audit_log_config.key
-      exempted_members = audit_log_config.value.exempted_members
+      log_type = audit_log_config.key
+      exempted_members = [
+        for m in try(audit_log_config.value.exempted_members, []) :
+        lookup(local.ctx.iam_principals, m, m)
+      ]
     }
   }
 }

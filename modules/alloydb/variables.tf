@@ -30,9 +30,9 @@ variable "automated_backup_configuration" {
       days_of_week = optional(list(string), [
         "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"
       ])
-      start_times = optional(object({
-        hours = optional(number, 23)
-      }), {})
+      start_times = optional(list(object({
+        hours = number
+      })), [{ hours = 23 }])
     }), {})
     retention_count  = optional(number, 7)
     retention_period = optional(string)
@@ -45,8 +45,11 @@ variable "automated_backup_configuration" {
         # Backup window validation below
         !(var.automated_backup_configuration.retention_count != null && var.automated_backup_configuration.retention_period != null) &&
         # Backup window hours below
-        var.automated_backup_configuration.weekly_schedule.start_times.hours >= 0 &&
-        var.automated_backup_configuration.weekly_schedule.start_times.hours <= 23 &&
+        (alltrue([
+          for v in var.automated_backup_configuration.weekly_schedule.start_times :
+          v.hours >= 0 &&
+          v.hours <= 23
+        ])) &&
         # Backup window day validation
         setintersection(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"], var.automated_backup_configuration.weekly_schedule.days_of_week) == toset(var.automated_backup_configuration.weekly_schedule.days_of_week)
       ) : true
@@ -109,6 +112,31 @@ variable "cross_region_replication" {
       cpu_count    = number
       machine_type = optional(string)
     }))
+    read_pool = optional(map(object({
+      display_name = optional(string)
+      node_count   = optional(number, 1)
+      flags        = optional(map(string))
+      client_connection_config = optional(object({
+        require_connectors = optional(bool, false)
+        ssl_config = optional(object({
+          ssl_mode = string
+        }))
+      }))
+      machine_config = optional(object({
+        cpu_count    = optional(number, 2)
+        machine_type = optional(string)
+      }), {})
+      network_config = optional(object({
+        authorized_external_networks = optional(list(string), [])
+        enable_public_ip             = optional(bool, false)
+      }), {})
+      query_insights_config = optional(object({
+        query_string_length     = optional(number, 1024)
+        record_application_tags = optional(bool, true)
+        record_client_address   = optional(bool, true)
+        query_plans_per_minute  = optional(number, 5)
+      }))
+    })), {})
   })
   default  = {}
   nullable = false
@@ -121,8 +149,8 @@ variable "cross_region_replication" {
     error_message = "Please choose to either promote secondary cluster or align an existing cluster after switchover."
   }
   validation {
-    condition     = contains([2, 4, 8, 16, 32, 64, 96, 128], try(var.cross_region_replication.secondary_machine_config.cpu_count, 2))
-    error_message = "The number of CPU's in the VM instance must be one of [2, 4, 8, 16, 32, 64, 96, 128]"
+    condition     = contains([1, 2, 4, 8, 16, 32, 64, 72, 96, 128], try(var.cross_region_replication.secondary_machine_config.cpu_count, 2))
+    error_message = "The number of CPU's in the VM instance must be one of [1, 2, 4, 8, 16, 32, 64, 72, 96, 128]"
   }
 }
 
@@ -175,7 +203,7 @@ variable "initial_user" {
   description = "AlloyDB cluster initial user credentials."
   type = object({
     user     = optional(string, "postgres")
-    password = string
+    password = optional(string)
   })
   default = null
 }
@@ -207,8 +235,8 @@ variable "machine_config" {
   nullable = false
   default  = {}
   validation {
-    condition     = contains([2, 4, 8, 16, 32, 64, 96, 128], var.machine_config.cpu_count)
-    error_message = "The number of CPU's in the VM instance must be one of [2, 4, 8, 16, 32, 64, 96, 128]"
+    condition     = contains([1, 2, 4, 8, 16, 32, 64, 72, 96, 128], var.machine_config.cpu_count)
+    error_message = "The number of CPU's in the VM instance must be one of [1, 2, 4, 8, 16, 32, 64, 72, 96, 128]"
   }
 }
 
@@ -262,6 +290,22 @@ variable "network_config" {
   }
 }
 
+variable "observability_config" {
+  description = "Advanced query insights config for AlloyDB. Mutually exclusive with query_insights_config."
+  type = object({
+    enabled                       = optional(bool, false)
+    preserve_comments             = optional(bool, false)
+    track_wait_events             = optional(bool, true)
+    max_query_string_length       = optional(number, 10240)
+    record_application_tags       = optional(bool, false)
+    query_plans_per_minute        = optional(number, 20)
+    track_active_queries          = optional(bool, false)
+    track_client_address          = optional(bool, false)
+    assistive_experiences_enabled = optional(bool, false)
+  })
+  default = null
+}
+
 variable "prefix" {
   description = "Optional prefix used to generate instance names."
   type        = string
@@ -284,7 +328,7 @@ variable "project_number" {
 }
 
 variable "query_insights_config" {
-  description = "Query insights config."
+  description = "Query insights config. Mutually exclusive with observability_config. It will be ignored if observability_config is enabled."
   type = object({
     query_string_length     = optional(number, 1024)
     record_application_tags = optional(bool, true)
@@ -320,15 +364,26 @@ variable "read_pool" {
       record_client_address   = optional(bool, true)
       query_plans_per_minute  = optional(number, 5)
     }))
+    observability_config = optional(object({
+      enabled                       = optional(bool, false)
+      preserve_comments             = optional(bool, false)
+      track_wait_events             = optional(bool, true)
+      max_query_string_length       = optional(number, 10240)
+      record_application_tags       = optional(bool, false)
+      query_plans_per_minute        = optional(number, 20)
+      track_active_queries          = optional(bool, false)
+      track_client_address          = optional(bool, false)
+      assistive_experiences_enabled = optional(bool, false)
+    }), null)
   }))
   nullable = false
   default  = {}
   validation {
     condition = alltrue([
       for k, v in var.read_pool :
-      contains([2, 4, 8, 16, 32, 64, 96, 128], v.machine_config.cpu_count)
+      contains([1, 2, 4, 8, 16, 32, 64, 72, 96, 128], v.machine_config.cpu_count)
     ])
-    error_message = "The number of CPU's in the VM instance must be one of [2, 4, 8, 16, 32, 64, 96, 128]"
+    error_message = "The number of CPU's in the VM instance must be one of [1, 2, 4, 8, 16, 32, 64, 72, 96, 128]"
   }
   validation {
     condition = alltrue([

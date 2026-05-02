@@ -4,6 +4,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "allowed_values_regex": {
+      "type": "string"
+    },
     "name": {
       "type": "string"
     },
@@ -29,7 +32,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^[a-z-][a-z0-9-]+$": {
+        "^[a-z-][^\\\\'\"/]+$": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
@@ -56,6 +59,22 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "allowed_values_regex"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "values"
+          ]
+        }
+      }
+    }
+  ],
   "$defs": {
     "iam": {
       "type": "object",

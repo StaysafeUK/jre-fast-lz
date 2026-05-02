@@ -142,7 +142,11 @@ variable "backend_service_configs" {
         access_key_version = optional(string)
         origin_region      = optional(string)
       }))
-  })) }))
+    }))
+    tls_settings = optional(object({
+      sni = optional(string)
+    }))
+  }))
   default  = {}
   nullable = false
   validation {
@@ -190,6 +194,6 @@ variable "backend_service_configs" {
         )
       ]
     ]))
-    error_message = "When specified, all locality lb polcies must have EITHER policy or custom_policy filled, not both."
+    error_message = "When specified, all locality lb policies must have EITHER policy or custom_policy filled, not both."
   }
 }

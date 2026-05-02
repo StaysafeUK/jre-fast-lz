@@ -15,9 +15,18 @@
 
 module: fast/stages/0-org-setup
 tests:
-  # TODO: rename to simple once fast lint setup accepts extra dirs
-  not-simple:
+  hardened:
     inventory:
-      - not-simple.yaml
+      - hardened.yaml
+    extra_dirs:
+      - ../../../tests/fast/stages/s0_org_setup/data-hardened
+  simple:
+    inventory:
+      - simple.yaml
     extra_dirs:
       - ../../../tests/fast/stages/s0_org_setup/data-simple
+  starter-gcd:
+    inventory:
+      - starter-gcd.yaml
+    extra_dirs:
+      - ../../../tests/fast/stages/s0_org_setup/data-starter-gcd

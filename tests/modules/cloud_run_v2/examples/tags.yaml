@@ -69,7 +69,6 @@ values:
     location: europe-west8
     name: hello-service
     project: project-id
-    scaling: []
     template:
     - annotations: null
       containers:
@@ -124,7 +123,5 @@ counts:
   google_tags_location_tag_binding: 2
   google_tags_tag_key: 1
   google_tags_tag_value: 3
-  modules: 3
-  resources: 8
 
 outputs: {}

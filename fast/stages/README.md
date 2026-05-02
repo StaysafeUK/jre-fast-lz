@@ -25,7 +25,7 @@ To destroy a previous FAST deployment follow the instructions detailed in [clean
 
 - [Organization Setup](./0-org-setup/README.md)
   This stage combines the legacy bootstrap and resource management stages described below, allowing easy configuration of all related resources via factories. Its flexibility supports any type of organizational design, while still supporting traditional FAST stages like VPC Service Controls, security, networking, and any stage 3.
-  
+
 ## VPC Service Controls (1)
 
 - [VPC Service Controls](./1-vpcsc/README.md)
@@ -33,20 +33,35 @@ To destroy a previous FAST deployment follow the instructions detailed in [clean
 
 ## Shared resources (2)
 
-- [Security (Legacy)](2-security-legacy/README.md)  
+- [Security](2-security/README.md)
   Manages centralized security configurations in a separate stage, and is typically owned by the security team. This stage implements VPC Security Controls via separate perimeters for environments and central services, and creates projects to host centralized KMS keys used by the whole organization. It's meant to be easily extended to include other security-related resources which are required, like Secret Manager.\
   Exports: KMS key ids, CA ids
-- [Security](2-security/README.md)  
-  Manages centralized security configurations in a separate stage, and is typically owned by the security team. This stage implements VPC Security Controls via separate perimeters for environments and central services, and creates projects to host centralized KMS keys used by the whole organization. It's meant to be easily extended to include other security-related resources which are required, like Secret Manager.\
-  Exports: KMS key ids, CA ids
-- Networking ([Peering/VPN](2-networking-a-simple/README.md)/[NVA (w/ optional BGP support)](2-networking-b-nva/README.md)/[Separate environments](2-networking-c-separate-envs/README.md))  
-  Manages centralized network resources in a separate stage, and is typically owned by the networking team. This stage implements a hub-and-spoke design, and includes connectivity via VPN to on-premises, and YAML-based factories for firewall rules (hierarchical and VPC-level) and subnets. It's currently available in four flavors: [spokes connected via VPC peering/VPN](2-networking-a-simple/README.md), [spokes connected via appliances (w/ optional BGP support)](2-networking-b-nva/README.md) and [separated network environments](2-networking-c-separate-envs/README.md).\
+- Networking ([Networking factory](2-networking/README.md))
+  Manages centralized network resources in a separate stage, and is typically owned by the networking team. This stage provides several different design as YaML datasets, including hub-and-spoke with VPC Peerings, VPNs, NVAs and NCC.
   Exports: host project ids and numbers, vpc self links
-- [Project Factory](./2-project-factory/)  
+- [Project Factory](./2-project-factory/)
   YAML-based factory to create and configure application or team-level projects. Configuration includes VPC-level settings for Shared VPC, service-level configuration for CMEK encryption via centralized keys, and service account creation for workloads and applications. This stage can be cloned if an org-wide or dedicated per-environment factories are needed.
 
-## Environment-level resources (3)
+## Importing existing setup into FAST
+For brownfield implementations you may need to import existing setting in the organization, folders, etc. These snippets can help you add existing settings into the YAML file
 
-- [Data Platform](./3-data-platform-dev/)
-- [GKE Multitenant](./3-gke-dev/)
-- [Google Cloud VMware Engine](./3-gcve-dev/)
+Scripts below require [yq](https://github.com/mikefarah/yq/) in at least version 4. It was tested using yq `v4.47.2`.
+
+### IAM bindings
+To create `iam:` part of the factory YAML file, you can use following snippet:
+```shell
+gcloud <resource> get-iam-policy <resource name> | yq '.bindings | map({"key": .role, "value": .members}) | from_entries'
+```
+
+For example use following code, to get IAM bindings on organization level to be used in `0-org-setup/dataset/.../organization/.config.yaml`
+```shell
+gcloud organizations get-iam-policy 12345 | yq '.bindings | map({"key": .role, "value": .members}) | from_entries'
+```
+
+To create `iam_by_principals:` part of the factory YAML file, you can use following snippet:
+```shell
+gcloud <resource> get-iam-policy <resource name> |  yq '
+[.bindings | .[] | .members[] as $member | { "member": $member, "role": .role}] |
+group_by(.member) | sort_by(.[0].member) | .[] | { .[0].member: map(.role)}
+'
+```

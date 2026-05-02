@@ -8,6 +8,9 @@ context = {
     myrole_one = "organizations/366118655033/roles/myRoleOne"
     myrole_two = "organizations/366118655033/roles/myRoleTwo"
   }
+  email_addresses = {
+    default = "foo@example.com"
+  }
   folder_ids = {
     "test/prod" = "folders/6789012345"
   }
@@ -28,11 +31,74 @@ context = {
   tag_values = {
     "test/one" = "tagValues/1234567890"
   }
+  tag_vars = {
+    projects = {
+      "test-00" = {
+        test = "foo-test-0/dynamic_test"
+      }
+    }
+  }
+  log_buckets = {
+    audit = "logging.googleapis.com/projects/my-project/locations/global/buckets/audit-bucket"
+  }
+  notification_channels = {
+    email = "projects/my-project/notificationChannels/12345"
+  }
   vpc_sc_perimeters = {
     default = "accessPolicies/888933661165/servicePerimeters/default"
   }
+  pubsub_topics = {
+    test = "projects/test-prod-audit-logs-0/topics/audit-logs"
+  }
 }
-parent = "$folder_ids:test/prod"
+alerts = {
+  test-alert = {
+    combiner     = "OR"
+    display_name = "Test Alert"
+    conditions = [{
+      display_name = "test-condition"
+      condition_threshold = {
+        comparison = "COMPARISON_GT"
+        duration   = "60s"
+        filter     = "resource.type=\"gce_instance\" AND metric.type=\"compute.googleapis.com/instance/cpu/utilization\""
+      }
+    }]
+    notification_channels = ["$notification_channels:email"]
+  }
+}
+logging_metrics = {
+  test-metric = {
+    filter      = "resource.type=\"gce_instance\""
+    bucket_name = "$log_buckets:audit"
+  }
+}
+notification_channels = {
+  new-email = {
+    type = "email"
+    labels = {
+      email_address = "$email_addresses:default"
+    }
+  }
+  new-pubsub = {
+    type = "pubsub"
+    labels = {
+      topic = "$pubsub_topics:test"
+    }
+  }
+}
+asset_feeds = {
+  test = {
+    billing_project = "test-project"
+    feed_output_config = {
+      pubsub_destination = {
+        topic = "$pubsub_topics:test"
+      }
+    }
+  }
+}
+contacts = {
+  "$email_addresses:default" = ["ALL"]
+}
 iam = {
   "$custom_roles:myrole_one" = [
     "$iam_principals:myuser"
@@ -69,6 +135,39 @@ iam_bindings_additive = {
     member = "$service_agents:compute"
   }
 }
+logging_data_access = {
+  allServices = {
+    ADMIN_READ = {
+      exempted_members = ["$iam_principals:mygroup"]
+    }
+    DATA_READ = {}
+  }
+}
+logging_sinks = {
+  test-pubsub = {
+    destination = "$pubsub_topics:test"
+    filter      = "log_id('cloudaudit.googleapis.com/activity')"
+    type        = "pubsub"
+  }
+}
+pam_entitlements = {
+  net-admins = {
+    max_request_duration = "3600s"
+    manual_approvals = {
+      require_approver_justification = true
+      steps = [{
+        approvers = ["$iam_principals:mygroup"]
+      }]
+    }
+    eligible_users = ["$iam_principals:mygroup"]
+    privileged_access = [
+      { role = "roles/compute.networkAdmin" },
+      { role = "roles/compute.admin" },
+      { role = "$custom_roles:myrole_two" }
+    ]
+  }
+}
+parent = "$folder_ids:test/prod"
 services = [
   "compute.googleapis.com"
 ]
@@ -93,8 +192,24 @@ shared_vpc_service_config = {
   }
   service_iam_grants = ["$service_agents:compute"]
 }
+iam_by_principals_conditional = {
+  "$iam_principals:myuser" = {
+    roles = [
+      "roles/storage.admin",
+      "$custom_roles:myrole_one",
+      "$custom_roles:myrole_two",
+    ]
+    condition = {
+      title       = "expires_after_2020_12_31"
+      description = "Expiring at midnight of 2020-12-31"
+      expression  = "request.time < timestamp(\"2021-01-01T00:00:00Z\")"
+    }
+  }
+}
 tag_bindings = {
-  foo = "$tag_values:test/one"
+  bar = "tagValues/1234567891"
+  baz = "$tag_values:test/one"
+  foo = "$${projects[\"test-00\"].test}/cc-123"
 }
 tags = {
   test = {

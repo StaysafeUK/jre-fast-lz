@@ -17,18 +17,22 @@
 variable "context" {
   description = "Context-specific interpolations."
   type = object({
-    custom_roles          = optional(map(string), {})
-    folder_ids            = optional(map(string), {})
-    iam_principals        = optional(map(string), {})
-    locations             = optional(map(string), {})
-    kms_keys              = optional(map(string), {})
-    notification_channels = optional(map(string), {})
-    project_ids           = optional(map(string), {})
-    service_account_ids   = optional(map(string), {})
-    tag_keys              = optional(map(string), {})
-    tag_values            = optional(map(string), {})
-    vpc_host_projects     = optional(map(string), {})
-    vpc_sc_perimeters     = optional(map(string), {})
+    cidr_ranges_sets            = optional(map(list(string)), {})
+    custom_roles                = optional(map(string), {})
+    email_addresses             = optional(map(string), {})
+    folder_ids                  = optional(map(string), {})
+    iam_principals              = optional(map(string), {})
+    locations                   = optional(map(string), {})
+    kms_keys                    = optional(map(string), {})
+    notification_channels       = optional(map(string), {})
+    project_ids                 = optional(map(string), {})
+    service_account_ids         = optional(map(string), {})
+    tag_keys                    = optional(map(string), {})
+    tag_values                  = optional(map(string), {})
+    vpc_host_projects           = optional(map(string), {})
+    vpc_sc_perimeters           = optional(map(string), {})
+    workload_identity_pools     = optional(map(string), {})
+    workload_identity_providers = optional(map(string), {})
   })
   default  = {}
   nullable = false
@@ -37,13 +41,18 @@ variable "context" {
 variable "factories_config" {
   description = "Configuration for the resource factories or external data."
   type = object({
-    billing_accounts  = optional(string, "data/billing-accounts")
-    cicd              = optional(string)
-    defaults          = optional(string, "data/defaults.yaml")
-    folders           = optional(string, "data/folders")
-    organization      = optional(string, "data/organization")
-    project_templates = optional(string, "data/templates")
-    projects          = optional(string, "data/projects")
+    dataset = optional(string, "datasets/classic")
+    paths = optional(object({
+      billing_accounts  = optional(string, "billing-accounts")
+      cicd_workflows    = optional(string)
+      defaults          = optional(string, "defaults.yaml")
+      folders           = optional(string, "folders")
+      observability     = optional(string, "observability")
+      organization      = optional(string, "organization")
+      project_templates = optional(string, "templates")
+      projects          = optional(string, "projects")
+      vpcs              = optional(string, "vpcs")
+    }), {})
   })
   nullable = false
   default  = {}

@@ -15,26 +15,20 @@
  */
 
 locals {
-  paths = {
-    for k, v in var.factories_config : k => try(pathexpand(v), null)
+  _ctx = {
+    for k, v in var.context : k => merge(
+      v,
+      try(local._defaults.context[k], {})
+    )
   }
   # fail if we have no valid defaults
   _defaults = yamldecode(file(local.paths.defaults))
-  ctx = merge(var.context, {
-    iam_principals = local.iam_principals
-    locations = {
-      for k, v in local.defaults.locations :
-      k => v if k != "pubsub"
-    }
+  ctx = merge(local._ctx, {
+    iam_principals = merge(local.iam_principals, local._ctx.iam_principals)
   })
   defaults = {
     billing_account = try(local._defaults.global.billing_account, null)
-    locations = merge({
-      bigquery = "eu"
-      logging  = "global"
-      pubsub   = []
-      storage  = "eu"
-    }, try(local._defaults.global.locations, {}))
+    observability   = try(local._defaults.observability, null)
     organization = (
       try(local._defaults.global.organization.id, null) == null
       ? null
@@ -56,10 +50,33 @@ locals {
     storage_bucket = try(local._defaults.output_files.storage_bucket, null)
     providers      = try(local._defaults.output_files.providers, {})
   }
+  paths = {
+    for k, v in var.factories_config.paths : k => try(pathexpand(
+      startswith(v, "/") || startswith(v, ".")
+      ? v :
+      "${var.factories_config.dataset}/${v}"
+    ), null)
+  }
   project_defaults = {
     defaults  = try(local._defaults.projects.defaults, {})
     overrides = try(local._defaults.projects.overrides, {})
   }
+  vpc_defaults = {
+    defaults  = try(local._defaults.vpcs.defaults, {})
+    overrides = try(local._defaults.vpcs.overrides, {})
+  }
+  workload_identity_pools = merge([
+    for k, v in module.factory.projects : {
+      for wk, wv in v.workload_identity_pools :
+      "${k}/${wk}" => wv
+    }
+  ]...)
+  workload_identity_providers = merge([
+    for k, v in module.factory.projects : {
+      for wk, wv in v.workload_identity_providers :
+      "${k}/${wk}" => wv.name
+    }
+  ]...)
 }
 
 # TODO: streamine location replacements
@@ -84,13 +101,6 @@ resource "terraform_data" "precondition" {
         try(local.project_defaults.overrides.prefix, null) != null
       )
       error_message = "Prefix must be set in project defaults or overrides."
-    }
-    precondition {
-      condition = (
-        try(local.project_defaults.defaults.storage_location, null) != null ||
-        try(local.project_defaults.overrides.storage_location, null) != null
-      )
-      error_message = "Storage location must be set in project defaults or overrides."
     }
   }
 }

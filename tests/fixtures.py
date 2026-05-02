@@ -144,6 +144,17 @@ def plan_summary(module_path, basedir, tf_var_files=None, extra_files=None,
     return PlanSummary(values, dict(counts), outputs)
 
 
+def filter_plan_values(values, ignored_attributes):
+  """Remove ignored attributes from plan values."""
+  if not ignored_attributes:
+    return values
+  for addr, resource_values in values.items():
+    if isinstance(resource_values, dict):
+      for attr in ignored_attributes:
+        resource_values.pop(attr, None)
+  return values
+
+
 @pytest.fixture(name='plan_summary')
 def plan_summary_fixture(request):
   """Return a function to generate a PlanSummary.
@@ -281,7 +292,13 @@ def validate_plan_object(expected_value, plan_value, relative_path,
 
   # all other objects
   else:
-    assert plan_value == expected_value, \
+    if isinstance(plan_value, str) and isinstance(expected_value, str):
+      # plan_value may contain newline at the end which is hard to replicate in
+      # expected_value YAML
+      is_ok = plan_value.strip() == expected_value.strip()
+    else:
+      is_ok = plan_value == expected_value
+    assert is_ok, \
       f'{relative_path}: {relative_address} failed. Got `{plan_value}`, expected `{expected_value}`'
 
 

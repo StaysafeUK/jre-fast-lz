@@ -66,10 +66,22 @@
               "additionalProperties": false,
               "patternProperties": {
                 "^[a-z0-9_-]+$": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "type": "string"
+                }
+              }
+            },
+            "locations": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "bigquery": {
+                  "type": "string"
+                },
+                "logging": {
+                  "type": "string"
+                },
+                "storage": {
+                  "type": "string"
                 }
               }
             },
@@ -198,9 +210,6 @@
                 "host_project"
               ]
             },
-            "storage_location": {
-              "type": "string"
-            },
             "tag_bindings": {
               "type": "object",
               "default": {},
@@ -227,6 +236,34 @@
                 }
               }
             },
+            "universe": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "domain",
+                "prefix"
+              ],
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "forced_jit_service_identities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "prefix": {
+                  "type": "string"
+                },
+                "unavailable_service_identities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
             "vpc_sc": {
               "type": "object",
               "properties": {
@@ -241,48 +278,6 @@
               "required": [
                 "perimeter_name"
               ]
-            },
-            "logging_data_access": {
-              "type": "object",
-              "default": {},
-              "additionalProperties": {
-                "type": "object",
-                "properties": {
-                  "ADMIN_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_WRITE": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
             }
           }
         },
@@ -323,6 +318,21 @@
                 "ABANDON"
               ]
             },
+            "locations": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "bigquery": {
+                  "type": "string"
+                },
+                "logging": {
+                  "type": "string"
+                },
+                "storage": {
+                  "type": "string"
+                }
+              }
+            },
             "parent": {
               "type": "string"
             },
@@ -341,9 +351,6 @@
                   }
                 }
               }
-            },
-            "storage_location": {
-              "type": "string"
             },
             "tag_bindings": {
               "type": "object",
@@ -371,6 +378,34 @@
                 }
               }
             },
+            "universe": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "domain",
+                "prefix"
+              ],
+              "properties": {
+                "domain": {
+                  "type": "string"
+                },
+                "forced_jit_service_identities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "prefix": {
+                  "type": "string"
+                },
+                "unavailable_service_identities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
             "vpc_sc": {
               "type": "object",
               "properties": {
@@ -385,48 +420,6 @@
               "required": [
                 "perimeter_name"
               ]
-            },
-            "logging_data_access": {
-              "type": "object",
-              "default": {},
-              "additionalProperties": {
-                "type": "object",
-                "properties": {
-                  "ADMIN_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_WRITE": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
             }
           }
         }
@@ -436,6 +429,30 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "custom_roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "email_addresses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "folder_ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "kms_keys": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "iam_principals": {
           "type": "object",
           "additionalProperties": {
@@ -447,6 +464,78 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "notification_channels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "project_ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "service_account_ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tag_keys": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tag_values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tag_vars": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "projects": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "organization": {
+              "type": "string"
+            }
+          }
+        },
+        "vpc_host_projects": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "vpc_sc_perimeters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "output_files": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "local_path": {
+          "type": "string"
+        },
+        "storage_bucket": {
+          "type": "string"
         }
       }
     }
@@ -456,7 +545,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^(?:roles/|\\$custom_roles:)": {
+        "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)": {
           "type": "array",
           "items": {
             "type": "string",
@@ -482,7 +571,7 @@
             },
             "role": {
               "type": "string",
-              "pattern": "^(?:roles/|\\$custom_roles:)"
+              "pattern": "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)"
             },
             "condition": {
               "type": "object",
@@ -521,7 +610,7 @@
             },
             "role": {
               "type": "string",
-              "pattern": "^(?:roles/|\\$custom_roles:)"
+              "pattern": "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)"
             },
             "condition": {
               "type": "object",
@@ -554,7 +643,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^(?:roles/|\\$custom_roles:)"
+            "pattern": "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)"
           }
         }
       }

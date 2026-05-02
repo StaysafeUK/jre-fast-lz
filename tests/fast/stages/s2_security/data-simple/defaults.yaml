@@ -20,4 +20,7 @@ context:
     secondary: europe-west3
 projects:
   defaults:
-    storage_location: eu
+    locations:
+      storage: eu
+output_files:
+  storage_bucket: $storage_buckets:iac-0/iac-outputs

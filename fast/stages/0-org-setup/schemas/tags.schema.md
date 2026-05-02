@@ -6,6 +6,7 @@
 
 *additional properties: false*
 
+- **allowed_values_regex**: *string*
 - **name**: *string*
 - **description**: *string*
 - **id**: *string*
@@ -15,7 +16,7 @@
 - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
 - **values**: *object*
   <br>*additional properties: false*
-  - **`^[a-z-][a-z0-9-]+$`**: *object*
+  - **`^[a-z-][^\\'"/]+$`**: *object*
     <br>*additional properties: false*
     - **name**: *string*
     - **description**: *string*

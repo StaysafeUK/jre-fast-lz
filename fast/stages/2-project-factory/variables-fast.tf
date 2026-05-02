@@ -24,7 +24,7 @@ variable "automation" {
 }
 
 variable "billing_account" {
-  # tfdoc:variable:source 0-org-setup
+  # tfdoc:variable:source 0-globals
   description = "Billing account id."
   type = object({
     id = string
@@ -71,14 +71,14 @@ variable "kms_keys" {
   default     = {}
 }
 
-variable "locations" {
-  # tfdoc:variable:source 0-org-setup
-  description = "Optional locations for GCS, BigQuery, and logging buckets created here."
+variable "organization" {
+  # tfdoc:variable:source 0-globals
+  description = "Organization details."
   type = object({
-    storage = optional(string, "eu")
+    domain      = string
+    id          = number
+    customer_id = string
   })
-  nullable = false
-  default  = {}
 }
 
 variable "perimeters" {
@@ -90,7 +90,7 @@ variable "perimeters" {
 }
 
 variable "prefix" {
-  # tfdoc:variable:source 0-org-setup
+  # tfdoc:variable:source 0-globals
   description = "Prefix used for resources that need unique names. Use a maximum of 9 chars for organizations, and 11 chars for tenants."
   type        = string
   validation {
@@ -131,8 +131,19 @@ variable "tag_values" {
   default     = {}
 }
 
-variable "universe" {
+variable "tag_vars" {
   # tfdoc:variable:source 0-org-setup
+  description = "FAST-managed resource manager tag key namespaced names."
+  type = object({
+    projects     = optional(map(map(string)), {})
+    organization = optional(map(string), {})
+  })
+  nullable = false
+  default  = {}
+}
+
+variable "universe" {
+  # tfdoc:variable:source 0-globals
   description = "GCP universe where to deploy projects. The prefix will be prepended to the project id."
   type = object({
     domain                         = string

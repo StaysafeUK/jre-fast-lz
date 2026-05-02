@@ -6,6 +6,28 @@
 
 *additional properties: false*
 
+- **asset_feeds**: *object*
+  <br>*additional properties: false*
+  - **`^[a-z0-9-]+$`**: *object*
+    <br>*additional properties: false*
+    - **billing_project**: *string*
+    - **content_type**: *string*
+      <br>*enum: ['RESOURCE', 'IAM_POLICY', 'ORG_POLICY', 'ACCESS_POLICY', 'OS_INVENTORY', 'RELATIONSHIP']*
+    - **asset_types**: *array*
+      - items: *string*
+    - **asset_names**: *array*
+      - items: *string*
+    - ⁺**feed_output_config**: *object*
+      <br>*additional properties: false*
+      - ⁺**pubsub_destination**: *object*
+        <br>*additional properties: false*
+        - ⁺**topic**: *string*
+    - **condition**: *object*
+      <br>*additional properties: false*
+      - ⁺**expression**: *string*
+      - **title**: *string*
+      - **description**: *string*
+      - **location**: *string*
 - **automation**: *object*
   <br>*additional properties: false*
   - **prefix**: *string*
@@ -16,6 +38,7 @@
     - **`^[a-z0-9-]+$`**: *object*
       <br>*additional properties: false*
       - **description**: *string*
+      - **prefix**: *string*
       - **iam**: *reference([iam](#refs-iam))*
       - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
       - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
@@ -31,21 +54,111 @@
 - **buckets**: *reference([buckets](#refs-buckets))*
 - **contacts**: *object*
   <br>*additional properties: false*
-  - **`^[a-z0-9_-]+$`**: *array*
+  - **`^(\S+@\S+\.\S+|\$email_addresses:\S+)$`**: *array*
     - items: *string*
+      <br>*enum: ['ALL', 'BILLING', 'LEGAL', 'SECURITY', 'PRODUCT_UPDATES', 'SUSPENSION', 'TECHNICAL']*
+- **data_access_logs**: *object*
+  <br>*additional properties: false*
+  - **`^([a-z][a-z-]+\.googleapis\.com|allServices)$`**: *object*
+    <br>*additional properties: false*
+    - **ADMIN_READ**: *object*
+      <br>*additional properties: false*
+      - **exempted_members**: *array*
+        - items: *string*
+    - **DATA_READ**: *object*
+      <br>*additional properties: false*
+      - **exempted_members**: *array*
+        - items: *string*
+    - **DATA_WRITE**: *object*
+      <br>*additional properties: false*
+      - **exempted_members**: *array*
+        - items: *string*
+- **datasets**: *object*
+  <br>*additional properties: false*
+  - **`^[a-z0-9_]+$`**: *object*
+    <br>*additional properties: false*
+    - **friendly_name**: *string*
+    - **location**: *string*
+    - **encryption_key**: *string*
+    - **iam**: *reference([iam](#refs-iam))*
+    - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
+    - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
+    - **iam_by_principals**: *reference([iam_by_principals](#refs-iam_by_principals))*
+    - **options**: *object*
+      <br>*additional properties: false*
+      - **default_table_expiration_ms**: *number*
+      - **default_partition_expiration_ms**: *number*
+      - **delete_contents_on_destroy**: *boolean*
+      - **max_time_travel_hours**: *number*
+    - **tag_bindings**: *reference([tag_bindings](#refs-tag_bindings))*
 - **deletion_policy**: *string*
   <br>*enum: ['PREVENT', 'DELETE', 'ABANDON']*
+- **factories_config**: *object*
+  <br>*additional properties: false*
+  - **custom_roles**: *string*
+  - **observability**: *string*
+  - **org_policies**: *string*
+  - **quotas**: *string*
+  - **scc_sha_custom_modules**: *string*
+  - **tags**: *string*
 - **iam**: *reference([iam](#refs-iam))*
 - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
 - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
 - **iam_by_principals**: *reference([iam_by_principals](#refs-iam_by_principals))*
+- **iam_by_principals_conditional**: *reference([iam_by_principals_conditional](#refs-iam_by_principals_conditional))*
+- **iam_by_principals_additive**: *reference([iam_by_principals](#refs-iam_by_principals))*
+- **kms**: *object*
+  <br>*additional properties: false*
+  - **autokeys**: *object*
+    <br>*additional properties: false*
+    - **`^[a-z][a-z0-9-]+[a-z0-9]$`**: *object*
+      <br>*additional properties: false*
+      - ⁺**location**: *string*
+      - ⁺**resource_type_selector**: *string*
+  - **keyrings**: *object*
+    <br>*additional properties: false*
+    - **`^[a-z][a-z0-9-]+[a-z0-9]$`**: *object*
+      <br>*additional properties: false*
+      - ⁺**location**: *string*
+      - **iam**: *reference([iam](#refs-iam))*
+      - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
+      - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
+      - **tag_bindings**: *reference([tag_bindings](#refs-tag_bindings))*
+      - **keys**: *object*
+        <br>*additional properties: false*
+        - **`^[a-z][a-z0-9-]+[a-z0-9]$`**: *object*
+          <br>*additional properties: false*
+          - **destroy_scheduled_duration**: *string*
+          - **rotation_period**: *string*
+          - **iam**: *reference([iam](#refs-iam))*
+          - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
+          - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
+          - **purpose**: *string*
+            <br>*default: ENCRYPT_DECRYPT*, *enum: ['CRYPTO_KEY_PURPOSE_UNSPECIFIED', 'ENCRYPT_DECRYPT', 'ASYMMETRIC_SIGN', 'ASYMMETRIC_DECRYPT', 'RAW_ENCRYPT_DECRYPT', 'MAC']*
+          - **version_template**: *object*
+            <br>*additional properties: false*
+            - ⁺**algorithm**: *string*
+            - **protection_level**: *string*
+              <br>*default: SOFTWARE*, *enum: ['SOFTWARE', 'HSM', 'EXTERNAL', 'EXTERNAL_VPC']*
 - **labels**: *object*
+- **pam_entitlements**: *reference([pam_entitlements](#refs-pam_entitlements))*
 - **log_buckets**: *object*
   <br>*additional properties: false*
-  - **`^[a-z0-9-]+$`**: *reference([log_bucket](#refs-log_bucket))*
+  - **`^[a-zA-Z0-9_-]+$`**: *reference([log_bucket](#refs-log_bucket))*
 - **metric_scopes**: *array*
   - items: *string*
 - **name**: *string*
+- **descriptive_name**: *string*
+- **dns_threat_detector**: *object*
+  <br>*additional properties: false*
+  - **enabled**: *boolean*
+  - **excluded_networks**: *array*
+    - items: *string*
+  - **labels**: *object*
+  - **location**: *string*
+  - **name**: *string*
+  - **threat_detector_provider**: *string*
+    <br>*enum: ['INFOBLOX']*
 - **org_policies**: *object*
   <br>*additional properties: false*
   - **`^[a-z]+\.`**: *object*
@@ -79,11 +192,11 @@
     - ⁺**quota_id**: *string*
     - ⁺**preferred_value**: *number*
     - **dimensions**: *object*
-      *additional properties: String*
+      <br>*additional properties: string*
     - **justification**: *string*
     - **contact_email**: *string*
     - **annotations**: *object*
-      *additional properties: String*
+      <br>*additional properties: string*
     - **ignore_safety_checks**: *string*
       <br>*enum: ['QUOTA_DECREASE_BELOW_USAGE', 'QUOTA_DECREASE_PERCENTAGE_TOO_HIGH', 'QUOTA_SAFETY_CHECK_UNSPECIFIED']*
 - **parent**: *string*
@@ -96,16 +209,23 @@
     - ⁺**number**: *number*
     - **services_enabled**: *array*
       - items: *string*
+- **project_template**: *string*
+- **pubsub_topics**: *object*
+  <br>*additional properties: false*
+  - **`^[a-zA-Z0-9_-]+$`**: *reference([pubsub_topic](#refs-pubsub_topic))*
 - **service_accounts**: *object*
   <br>*additional properties: false*
   - **`^[a-z0-9-]+$`**: *object*
     <br>*additional properties: false*
     - **display_name**: *string*
     - **iam**: *reference([iam](#refs-iam))*
+    - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
+    - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
     - **iam_self_roles**: *array*
       - items: *string*
     - **iam_project_roles**: *reference([iam_project_roles](#refs-iam_project_roles))*
     - **iam_sa_roles**: *reference([iam_sa_roles](#refs-iam_sa_roles))*
+    - **tag_bindings**: *reference([tag_bindings](#refs-tag_bindings))*
 - **service_encryption_key_ids**: *object*
   <br>*additional properties: false*
   - **`^[a-z-]+\.googleapis\.com$`**: *array*
@@ -135,33 +255,87 @@
   - **network_subnet_users**: *object*
     - **`^[a-z0-9_-]+$`**: *array*
       - items: *string*
+- **tags**: *object*
+  <br>*additional properties: object*
 - **tag_bindings**: *object*
   <br>*additional properties: false*
   - **`^[a-z0-9_-]+$`**: *string*
-- **tags**: *object*
-  *additional properties: Object*
+- **universe**: *object*
+  <br>*additional properties: false*
+  - **prefix**: *string*
+  - **forced_jit_service_identities**: *array*
+    - items: *string*
+  - **unavailable_services**: *array*
+    - items: *string*
+  - **unavailable_service_identities**: *array*
+    - items: *string*
 - **vpc_sc**: *object*
   - ⁺**perimeter_name**: *string*
   - **is_dry_run**: *boolean*
-- **datasets**: *object*
+- **workload_identity_pools**: *object*
   <br>*additional properties: false*
-  - **`^[a-z0-9_]+$`**: *object*
+  - **`^[a-z][a-z0-9-]+[a-z0-9]$`**: *object*
     <br>*additional properties: false*
-    - **friendly_name**: *string*
-    - **location**: *string*
+    - **description**: *string*
+    - **display_name**: *string*
+    - **disabled**: *boolean*
+    - **providers**: *object*
+      <br>*additional properties: false*
+      - **`^[a-z][a-z0-9-]+[a-z0-9]$`**: *object*
+        <br>*additional properties: false*
+        - **description**: *string*
+        - **display_name**: *string*
+        - **disabled**: *boolean*
+        - **attribute_condition**: *string*
+        - **attribute_mapping**: *object*
+          <br>*additional properties: string*
+        - **identity_provider**: *object*
 
 ## Definitions
 
 - **bucket**<a name="refs-bucket"></a>: *object*
   <br>*additional properties: false*
   - **name**: *string*
+  - **create**: *boolean*
   - **description**: *string*
+  - **encryption_key**: *string*
   - **iam**: *reference([iam](#refs-iam))*
   - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
   - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
   - **force_destroy**: *boolean*
   - **labels**: *object*
-    *additional properties: String*
+    <br>*additional properties: string*
+  - **lifecycle_rules**: *object*
+    <br>*additional properties: false*
+    - **`^[a-zA-Z0-9_-]+$`**: *object*
+      <br>*additional properties: false*
+      - ⁺**action**: *object*
+        <br>*additional properties: false*
+        - ⁺**type**: *string*
+          <br>*enum: ['Delete', 'SetStorageClass', 'AbortIncompleteMultipartUpload']*
+        - **storage_class**: *string*
+      - ⁺**condition**: *object*
+        <br>*additional properties: false*
+        - **age**: *number*
+        - **created_before**: *string*
+        - **custom_time_before**: *string*
+        - **days_since_custom_time**: *number*
+        - **days_since_noncurrent_time**: *number*
+        - **matches_prefix**: *array*
+          - items: *string*
+        - **matches_storage_class**: *array*
+          - items: *string*
+            <br>*enum: ['STANDARD', 'MULTI_REGIONAL', 'REGIONAL', 'NEARLINE', 'COLDLINE', 'ARCHIVE', 'DURABLE_REDUCED_AVAILABILITY']*
+        - **matches_suffix**: *array*
+          - items: *string*
+        - **noncurrent_time_before**: *string*
+        - **num_newer_versions**: *number*
+        - **with_state**: *string*
+          <br>*enum: ['LIVE', 'ARCHIVED', 'ANY']*
+  - **logging_config**: *object*
+    <br>*additional properties: false*
+    - ⁺**log_bucket**: *string*
+    - **log_object_prefix**: *string*
   - **location**: *string*
   - **managed_folders**: *object*
     <br>*additional properties: false*
@@ -175,12 +349,21 @@
   - **storage_class**: *string*
   - **uniform_bucket_level_access**: *boolean*
   - **versioning**: *boolean*
+  - **retention_policy**: *object*
+    <br>*additional properties: false*
+    - **retention_period**: *string*
+    - **is_locked**: *boolean*
+  - **soft_delete_retention**: *number*
+  - **enable_object_retention**: *boolean*
+  - **tag_bindings**: *reference([tag_bindings](#refs-tag_bindings))*
+  - **custom_placement_config**: *array*
+    - items: *string*
 - **buckets**<a name="refs-buckets"></a>: *object*
   <br>*additional properties: false*
   - **`^[a-z0-9-]+$`**: *reference([bucket](#refs-bucket))*
 - **iam**<a name="refs-iam"></a>: *object*
   <br>*additional properties: false*
-  - **`^(?:roles/|\$custom_roles:)`**: *array*
+  - **`^(?:roles/|\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)`**: *array*
     - items: *string*
       <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:||\$iam_principals:[a-z0-9_-]+)*
 - **iam_bindings**<a name="refs-iam_bindings"></a>: *object*
@@ -191,7 +374,7 @@
       - items: *string*
         <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)*
     - **role**: *string*
-      <br>*pattern: ^(?:roles/|\$custom_roles:)*
+      <br>*pattern: ^(?:roles/|\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)*
     - **condition**: *object*
       <br>*additional properties: false*
       - ⁺**expression**: *string*
@@ -204,7 +387,7 @@
     - **member**: *string*
       <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)*
     - **role**: *string*
-      <br>*pattern: ^(?:roles/|\$custom_roles:)*
+      <br>*pattern: ^(?:roles/|\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)*
     - **condition**: *object*
       <br>*additional properties: false*
       - ⁺**expression**: *string*
@@ -214,7 +397,19 @@
   <br>*additional properties: false*
   - **`^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)`**: *array*
     - items: *string*
-      <br>*pattern: ^(?:roles/|\$custom_roles:)*
+      <br>*pattern: ^(?:roles/|\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)*
+- **iam_by_principals_conditional**<a name="refs-iam_by_principals_conditional"></a>: *object*
+  <br>*additional properties: false*
+  - **`^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)`**: *object*
+    <br>*additional properties: false*
+    - ⁺**condition**: *object*
+      <br>*additional properties: false*
+      - ⁺**expression**: *string*
+      - ⁺**title**: *string*
+      - **description**: *string*
+    - ⁺**roles**: *array*
+      - items: *string*
+        <br>*pattern: ^(?:roles/|\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)*
 - **iam_billing_roles**<a name="refs-iam_billing_roles"></a>: *object*
   <br>*additional properties: false*
   - **`^[a-z0-9-]+$`**: *array*
@@ -250,3 +445,110 @@
     - **dataset_link_id**: *string*
     - **description**: *string*
   - **retention**: *number*
+- **pam_entitlements**<a name="refs-pam_entitlements"></a>: *object*
+  <br>*additional properties: false*
+  - **`^[a-z][a-z0-9-]{0,61}[a-z0-9]$`**: *object*
+    <br>*additional properties: false*
+    - ⁺**max_request_duration**: *string*
+    - ⁺**eligible_users**: *array*
+      - items: *string*
+    - ⁺**privileged_access**: *array*
+      - items: *object*
+        <br>*additional properties: false*
+        - ⁺**role**: *string*
+        - **condition**: *string*
+    - **requester_justification_config**: *object*
+      <br>*additional properties: false*
+      - **not_mandatory**: *boolean*
+      - **unstructured**: *boolean*
+    - **manual_approvals**: *object*
+      <br>*additional properties: false*
+      - ⁺**require_approver_justification**: *boolean*
+      - ⁺**steps**: *array*
+        - items: *object*
+          <br>*additional properties: false*
+          - ⁺**approvers**: *array*
+            - items: *string*
+          - **approvals_needed**: *number*
+          - **approver_email_recipients**: *array*
+            - items: *string*
+    - **additional_notification_targets**: *object*
+      <br>*additional properties: false*
+      - **admin_email_recipients**: *array*
+        - items: *string*
+      - **requester_email_recipients**: *array*
+        - items: *string*
+- **pubsub_topic**<a name="refs-pubsub_topic"></a>: *object*
+  <br>*additional properties: false*
+  - **iam**: *reference([iam](#refs-iam))*
+  - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
+  - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
+  - **iam_by_principals**: *reference([iam_by_principals](#refs-iam_by_principals))*
+  - **kms_key**: *string*
+  - **labels**: *object*
+    <br>*additional properties: string*
+  - **message_retention_duration**: *string*
+  - **regions**: *array*
+    - items: *string*
+  - **schema**: *object*
+    <br>*additional properties: false*
+    - ⁺**definition**: *string*
+    - **msg_encoding**: *string*
+    - ⁺**schema_type**: *string*
+  - **subscriptions**: *object*
+    <br>*additional properties: false*
+    - **`^[a-zA-Z0-9_-]+$`**: *object*
+      <br>*additional properties: false*
+      - **ack_deadline_seconds**: *number*
+      - **enable_exactly_once_delivery**: *boolean*
+      - **enable_message_ordering**: *boolean*
+      - **expiration_policy_ttl**: *string*
+      - **filter**: *string*
+      - **iam**: *reference([iam](#refs-iam))*
+      - **iam_bindings**: *reference([iam_bindings](#refs-iam_bindings))*
+      - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
+      - **labels**: *object*
+        <br>*additional properties: string*
+      - **message_retention_duration**: *string*
+      - **retain_acked_messages**: *boolean*
+      - **bigquery**: *object*
+        <br>*additional properties: false*
+        - ⁺**table**: *string*
+        - **drop_unknown_fields**: *boolean*
+        - **service_account_email**: *string*
+        - **use_table_schema**: *boolean*
+        - **use_topic_schema**: *boolean*
+        - **write_metadata**: *boolean*
+      - **cloud_storage**: *object*
+        <br>*additional properties: false*
+        - ⁺**bucket**: *string*
+        - **filename_prefix**: *string*
+        - **filename_suffix**: *string*
+        - **max_duration**: *string*
+        - **max_bytes**: *number*
+        - **avro_config**: *object*
+          <br>*additional properties: false*
+          - **write_metadata**: *boolean*
+      - **dead_letter_policy**: *object*
+        <br>*additional properties: false*
+        - ⁺**topic**: *string*
+        - **max_delivery_attempts**: *number*
+      - **push**: *object*
+        <br>*additional properties: false*
+        - ⁺**endpoint**: *string*
+        - **attributes**: *object*
+          <br>*additional properties: string*
+        - **no_wrapper**: *object*
+          <br>*additional properties: false*
+          - **write_metadata**: *boolean*
+        - **oidc_token**: *object*
+          <br>*additional properties: false*
+          - **audience**: *string*
+          - ⁺**service_account_email**: *string*
+      - **retry_policy**: *object*
+        <br>*additional properties: false*
+        - **minimum_backoff**: *number*
+        - **maximum_backoff**: *number*
+- **tag_bindings**<a name="refs-tag_bindings"></a>: *object*
+  <br>*additional properties: false*
+  - **`^[a-z0-9_-]+$`**: *string*

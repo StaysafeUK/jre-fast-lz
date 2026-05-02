@@ -17,36 +17,46 @@
 # tfdoc:file:description Project factory.
 
 locals {
-  _defaults = yamldecode(file(pathexpand(var.factories_config.defaults)))
-  context   = merge(var.context, lookup(local._defaults, "context", {}))
+  _context = {
+    for k, v in var.context :
+    k => merge(v, try(local.defaults.context[k], {}))
+  }
+  context = merge(local._context, {
+    vpc_sc_perimeters = merge(var.perimeters, local._context.vpc_sc_perimeters)
+  })
+  defaults = yamldecode(file(pathexpand(local.paths.defaults)))
   fast_defaults = {
-    billing_account = coalesce(
+    billing_account = try(coalesce(
       var.data_defaults.billing_account,
       var.billing_account.id
-    )
+    ), null)
     prefix = coalesce(
       var.data_defaults.prefix, var.prefix
     )
-    storage_location = coalesce(
-      var.data_defaults.storage_location, var.locations.storage
-    )
+  }
+  paths = {
+    for k, v in var.factories_config.paths : k => try(pathexpand(
+      startswith(v, "/") || startswith(v, ".")
+      ? v :
+      "${var.factories_config.dataset}/${v}"
+    ), null)
   }
   project_defaults = {
     defaults = {
       for k, v in var.data_defaults : k => try(
-        local._defaults.projects.defaults[k],
+        local.defaults.projects.defaults[k],
         lookup(local.fast_defaults, k, v)
       )
     }
     merges = {
       for k, v in var.data_merges : k => try(
-        local._defaults.projects.merges[k], v
+        local.defaults.projects.merges[k], v
       )
     }
     overrides = merge(
       {
         for k, v in var.data_overrides : k => try(
-          local._defaults.projects.overrides[k], v
+          local.defaults.projects.overrides[k], v
         )
       },
       {
@@ -71,6 +81,11 @@ module "factory" {
       subnet_self_links = {
         for v in local.subnet_self_links : v.key => v.link
       }
+      organization = {
+        id          = var.organization.id
+        domain      = var.organization.domain
+        customer_id = var.organization.customer_id
+      }
     }, local.context.condition_vars)
     custom_roles = merge(var.custom_roles, local.context.custom_roles)
     folder_ids   = merge(var.folder_ids, local.context.folder_ids)
@@ -83,25 +98,30 @@ module "factory" {
       local.context.iam_principals
     )
     kms_keys              = merge(var.kms_keys, local.context.kms_keys)
-    locations             = merge(var.locations, local.context.locations)
+    locations             = local.context.locations
     notification_channels = local.context.notification_channels
     project_ids = merge(
       var.project_ids, var.host_project_ids, local.context.project_ids
     )
-    tag_values        = merge(var.tag_values, local.context.tag_values)
+    tag_values = merge(var.tag_values, local.context.tag_values)
+    tag_vars = {
+      organization = merge(
+        var.tag_vars.organization, local.context.tag_vars.organization
+      )
+      projects = merge(
+        var.tag_vars.projects, local.context.tag_vars.projects
+      )
+    }
     vpc_sc_perimeters = merge(var.perimeters, local.context.vpc_sc_perimeters)
   }
   data_defaults  = local.project_defaults.defaults
   data_merges    = local.project_defaults.merges
   data_overrides = local.project_defaults.overrides
-  factories_config = merge(var.factories_config, {
+  factories_config = {
+    basepath = var.factories_config.dataset
     budgets = {
-      billing_account_id = try(
-        var.factories_config.budgets.billing_account_id, var.billing_account.id
-      )
-      data = try(
-        var.factories_config.budgets.data, "data/budgets"
-      )
+      billing_account = var.billing_account.id
     }
-  })
+    paths = var.factories_config.paths
+  }
 }

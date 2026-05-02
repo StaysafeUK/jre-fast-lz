@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,61 @@ locals {
     for k, v in module.factory.storage_buckets :
     "$storage_buckets:${k}" => v
   }
+  of_ctx = merge(local.ctx, {
+    custom_roles = merge(
+      local.ctx.custom_roles,
+      module.organization[0].custom_role_id
+    )
+    folder_ids = merge(
+      local.ctx.folder_ids,
+      module.factory.folder_ids
+    )
+    iam_principals = merge(
+      local.iam_principals,
+      {
+        for k, v in module.organization[0].service_agents :
+        "service_agents/org/${k}" => v.iam_email
+      }
+    )
+    project_ids = merge(
+      local.ctx.project_ids,
+      module.factory.project_ids
+    )
+    storage_buckets = module.factory.storage_buckets
+    tag_keys = merge(
+      local.ctx.tag_keys,
+      local.org_tag_keys
+    )
+    tag_values = merge(
+      local.ctx.tag_values,
+      local.org_tag_values
+    )
+    tag_vars = {
+      projects = merge([
+        for k, v in module.factory.projects : {
+          (k) = { for kk, vv in v.tag_vars : kk => vv }
+        } if length(v.tag_vars) > 0
+      ]...)
+      organization = {
+        for k, v in module.organization[0].tag_keys :
+        # the provider returns allowed_values_regex set to "" not null
+        k => v.namespaced_name if try(v.allowed_values_regex, "") != ""
+      }
+    }
+  })
+  of_logging_sinks = {
+    # Include project_id in the destination if supported (omitted for
+    # "storage" sinks).
+    for k, v in module.organization-iam[0].logging_sinks :
+    k => merge(
+      v,
+      (
+        strcontains(v.destination, "projects/")
+        ? { project_id = split("/", v.destination)[2] }
+        : {}
+      )
+    )
+  }
   of_outputs_bucket = (
     local.output_files.storage_bucket == null
     ? null
@@ -37,14 +92,25 @@ locals {
     ? null
     : pathexpand(local.output_files.local_path)
   )
+  of_providers_content = {
+    for k, v in local.output_files.providers : k => templatestring(local.of_template, {
+      bucket = lookup(
+        local.of_buckets, v.bucket, v.bucket
+      )
+      prefix = lookup(v, "prefix", null)
+      service_account = lookup(
+        local.of_service_accounts, v.service_account, v.service_account
+      )
+      universe_domain = local.of_universe_domain
+    })
+  }
   of_template = file("assets/providers.tf.tpl")
   of_tfvars = {
     globals = {
       billing_account = {
         id = local.defaults.billing_account
       }
-      groups    = local.ctx.iam_principals
-      locations = local.defaults.locations
+      groups = local.ctx.iam_principals
       organization = {
         customer_id = try(local.defaults.organization.customer_id, null)
         domain      = local.organization.domain
@@ -61,27 +127,28 @@ locals {
       automation = {
         outputs_bucket = local.of_outputs_bucket
       }
-      custom_roles = module.organization[0].custom_role_id
-      folder_ids = merge(
-        local.ctx.folder_ids,
-        module.factory.folder_ids
-      )
-      iam_principals = local.iam_principals
-      logging = {
-        writer_identities = module.organization-iam.0.sink_writer_identities
-      }
-      project_ids = merge(
-        local.ctx.project_ids,
-        module.factory.project_ids
-      )
-      project_numbers = module.factory.project_numbers
-      # project_numbers = module.factory.project_numbers
+      custom_roles     = local.of_ctx.custom_roles
+      folder_ids       = local.of_ctx.folder_ids
+      iam_principals   = local.of_ctx.iam_principals
+      logging_sinks    = local.of_logging_sinks
+      project_ids      = local.of_ctx.project_ids,
+      project_numbers  = module.factory.project_numbers
       service_accounts = module.factory.service_account_emails
       storage_buckets  = module.factory.storage_buckets
-      tag_values = merge(
-        local.ctx.project_ids,
-        local.org_tag_values
-      )
+      subnet_ips = {
+        for k, v in module.vpcs.vpcs : k => v.subnet_ips
+      }
+      subnet_self_links = {
+        for k, v in module.vpcs.vpcs : k => v.subnet_ids
+      }
+      tag_keys   = local.of_ctx.tag_keys
+      tag_values = local.of_ctx.tag_values
+      tag_vars   = local.of_ctx.tag_vars
+      vpc_self_links = {
+        for k, v in module.vpcs.vpcs : k => v.id
+      }
+      workload_identity_providers  = local.workload_identity_providers
+      workforce_identity_providers = module.organization[0].workforce_identity_providers
     }
   }
   of_universe_domain = try(
@@ -95,32 +162,15 @@ resource "local_file" "providers" {
   for_each        = local.of_path == null ? {} : local.output_files.providers
   file_permission = "0644"
   filename        = "${local.of_path}/providers/${each.key}-providers.tf"
-  content = templatestring(local.of_template, {
-    bucket = lookup(
-      local.of_buckets, each.value.bucket, each.value.bucket
-    )
-    prefix = lookup(each.value, "prefix", null)
-    service_account = lookup(
-      local.of_service_accounts, each.value.service_account, each.value.service_account
-    )
-    universe_domain = local.of_universe_domain
-  })
+  content         = local.of_providers_content[each.key]
 }
 
 resource "google_storage_bucket_object" "providers" {
-  for_each = local.output_files.storage_bucket == null ? {} : local.output_files.providers
-  bucket   = local.of_outputs_bucket
-  name     = "providers/${each.key}-providers.tf"
-  content = templatestring(local.of_template, {
-    bucket = lookup(
-      local.of_buckets, each.value.bucket, each.value.bucket
-    )
-    prefix = lookup(each.value, "prefix", null)
-    service_account = lookup(
-      local.of_service_accounts, each.value.service_account, each.value.service_account
-    )
-    universe_domain = local.of_universe_domain
-  })
+  for_each       = local.output_files.storage_bucket == null ? {} : local.output_files.providers
+  bucket         = local.of_outputs_bucket
+  name           = "providers/${each.key}-providers.tf"
+  content        = local.of_providers_content[each.key]
+  source_md5hash = md5(local.of_providers_content[each.key])
 }
 
 resource "local_file" "tfvars" {
@@ -131,8 +181,20 @@ resource "local_file" "tfvars" {
 }
 
 resource "google_storage_bucket_object" "tfvars" {
-  for_each = toset(local.output_files.storage_bucket == null ? [] : keys(local.of_tfvars))
-  bucket   = local.of_outputs_bucket
-  name     = "tfvars/0-${each.key}.auto.tfvars.json"
-  content  = jsonencode(local.of_tfvars[each.key])
+  for_each       = toset(local.output_files.storage_bucket == null ? [] : keys(local.of_tfvars))
+  bucket         = local.of_outputs_bucket
+  name           = "tfvars/0-${each.key}.auto.tfvars.json"
+  content        = jsonencode(local.of_tfvars[each.key])
+  source_md5hash = md5(jsonencode(local.of_tfvars[each.key]))
+}
+
+resource "google_storage_bucket_object" "version" {
+  count = (
+    local.output_files.storage_bucket != null &&
+    fileexists("fast_version.txt") ? 1 : 0
+  )
+  bucket         = local.of_outputs_bucket
+  name           = "versions/0-org-setup-version.txt"
+  source         = "fast_version.txt"
+  source_md5hash = filemd5("fast_version.txt")
 }

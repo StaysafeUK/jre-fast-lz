@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,133 +25,6 @@ locals {
     defaults  = try(var.data_defaults, {})
     overrides = try(var.data_overrides, {})
   }
-  data_defaults = {
-    defaults = merge(
-      {
-        billing_account = null
-        contacts        = {}
-        deletion_policy = null
-        factories_config = merge(
-          {
-            custom_roles  = null
-            observability = null
-            org_policies  = null
-            quotas        = null
-          },
-          try(local._data_defaults.defaults.factories_config, {
-            custom_roles  = null
-            observability = null
-            org_policies  = null
-            quotas        = null
-            }
-          )
-        )
-        labels        = {}
-        metric_scopes = []
-        parent        = null
-        prefix        = null
-        project_reuse = merge(
-          {
-            use_data_source = true
-            attributes      = null
-          },
-          try(local._data_defaults.defaults.project_reuse, {
-            use_data_source = true
-            attributes      = null
-            }
-          )
-        )
-        service_encryption_key_ids = {}
-        services                   = []
-        shared_vpc_service_config = merge(
-          {
-            host_project             = null
-            iam_bindings_additive    = {}
-            network_users            = []
-            service_agent_iam        = {}
-            service_agent_subnet_iam = {}
-            service_iam_grants       = []
-            network_subnet_users     = {}
-          },
-          try(local._data_defaults.defaults.shared_vpc_service_config, {
-            host_project             = null
-            iam_bindings_additive    = {}
-            network_users            = []
-            service_agent_iam        = {}
-            service_agent_subnet_iam = {}
-            service_iam_grants       = []
-            network_subnet_users     = {}
-            }
-          )
-        )
-        storage_location = null
-        tag_bindings     = {}
-        service_accounts = {}
-        universe         = null
-        vpc_sc = merge(
-          {
-            perimeter_name = null
-            is_dry_run     = false
-          },
-          try(local._data_defaults.defaults.vpc_sc, {
-            perimeter_name = null
-            is_dry_run     = false
-            }
-          )
-        )
-        logging_data_access = {}
-        bigquery_location   = null
-      },
-      try(
-        local._data_defaults.defaults, {}
-      )
-    )
-    # data_overrides default to null's, to mark that they should not override
-    overrides = merge({
-      billing_account = null
-      contacts        = null
-      deletion_policy = null
-      factories_config = merge(
-        {
-          custom_roles  = null
-          observability = null
-          org_policies  = null
-          quotas        = null
-        },
-        try(local._data_defaults.overrides.factories_config, {
-          custom_roles  = null
-          observability = null
-          org_policies  = null
-          quotas        = null
-          }
-        )
-      )
-      parent                     = null
-      prefix                     = null
-      service_encryption_key_ids = null
-      storage_location           = null
-      tag_bindings               = null
-      services                   = null
-      service_accounts           = null
-      universe                   = null
-      vpc_sc = try(
-        merge(
-          {
-            perimeter_name = null
-            is_dry_run     = false
-          },
-          local._data_defaults.overrides.vpc_sc
-        ),
-        null
-      )
-      logging_data_access = null
-      bigquery_location   = null
-      },
-      try(
-        local._data_defaults.overrides, {}
-      )
-    )
-  }
   _projects_output = {
     # Semantics of the merges are:
     #   - if data_overrides.<field> is not null, use this value
@@ -161,6 +34,7 @@ locals {
     # set data_overrides.<field> to "", [] or {} to ensure, that empty value is always passed, or do
     # the same in _projects_input to prevent falling back to default value
     for k, v in local._projects_input : k => merge(v, {
+      asset_feeds = try(v.asset_feeds, {})
       billing_account = try(coalesce( # type: string
         local.data_defaults.overrides.billing_account,
         try(v.billing_account, null),
@@ -176,66 +50,55 @@ locals {
         try(v.contacts, null),
         local.data_defaults.defaults.contacts
       )
-      factories_config = {  # type: object
-        custom_roles = try( # type: string
-          coalesce(
-            local.data_defaults.overrides.factories_config.custom_roles,
-            try(v.factories_config.custom_roles, null),
-            local.data_defaults.defaults.factories_config.custom_roles
-          ),
-          null
-        )
-        observability = try( # type: string
-          coalesce(
-            local.data_defaults.overrides.factories_config.observability,
-            try(v.factories_config.observability, null),
-            local.data_defaults.defaults.factories_config.observability
-          ),
-        null)
-        org_policies = try( # type: string
-          coalesce(
-            local.data_defaults.overrides.factories_config.org_policies,
-            try(v.factories_config.org_policies, null),
-            local.data_defaults.defaults.factories_config.org_policies
-          ),
-        null)
-        quotas = try( # type: string
-          coalesce(
-            local.data_defaults.overrides.factories_config.quotas,
-            try(v.factories_config.quotas, null),
-            local.data_defaults.defaults.factories_config.quotas
-          ),
-        null)
+      factories_config = {
+        custom_roles           = try(v.factories_config.custom_roles, null)
+        observability          = try(v.factories_config.observability, null)
+        org_policies           = try(v.factories_config.org_policies, null)
+        pam_entitlements       = try(v.factories_config.pam_entitlements, null)
+        quotas                 = try(v.factories_config.quotas, null)
+        scc_mute_configs       = try(v.factories_config.scc_mute_configs, null)
+        scc_sha_custom_modules = try(v.factories_config.scc_sha_custom_modules, null)
+        tags                   = try(v.factories_config.tags, null)
       }
-      iam                        = try(v.iam, {})                        # type: map(list(string))
-      iam_bindings               = try(v.iam_bindings, {})               # type: map(object({...}))
-      iam_bindings_additive      = try(v.iam_bindings_additive, {})      # type: map(object({...}))
-      iam_by_principals_additive = try(v.iam_by_principals_additive, {}) # type: map(list(string))
-      iam_by_principals          = try(v.iam_by_principals, {})          # map(list(string))
-      labels = coalesce(                                                 # type: map(string)
+      iam                           = try(v.iam, {})                           # type: map(list(string))
+      iam_bindings                  = try(v.iam_bindings, {})                  # type: map(object({...}))
+      iam_bindings_additive         = try(v.iam_bindings_additive, {})         # type: map(object({...}))
+      iam_by_principals_additive    = try(v.iam_by_principals_additive, {})    # type: map(list(string))
+      iam_by_principals             = try(v.iam_by_principals, {})             # map(list(string))
+      iam_by_principals_conditional = try(v.iam_by_principals_conditional, {}) # map(object({...}))
+      kms = {
+        autokeys = try(v.kms.autokeys, {})
+        keyrings = try(v.kms.keyrings, {})
+      }
+      labels = coalesce( # type: map(string)
         try(v.labels, null),
         local.data_defaults.defaults.labels
       )
+      logging_data_access = try(v.data_access_logs, {})
       metric_scopes = coalesce( # type: list(string)
         try(v.metric_scopes, null),
         local.data_defaults.defaults.metric_scopes
       )
-      name         = lookup(v, "name", basename(k)) # type: string
-      org_policies = try(v.org_policies, {})        # type: map(object({...}))
-      parent = try(                                 # type: string, nullable
+      descriptive_name = lookup(v, "descriptive_name", null)
+      name             = lookup(v, "name", basename(k)) # type: string
+      org_policies     = try(v.org_policies, {})        # type: map(object({...}))
+      parent = try(                                     # type: string, nullable
         coalesce(
           local.data_defaults.overrides.parent,
           try(v.parent, null),
           local.data_defaults.defaults.parent
         ), null
       )
-      prefix = try( # type: string, nullable
-        coalesce(
-          local.data_defaults.overrides.prefix,
-          try(v.prefix, null),
-          local.data_defaults.defaults.prefix
-        ), null
-      )
+      prefix = try(
+        (
+          local.data_defaults.overrides.prefix != null
+          ? local.data_defaults.overrides.prefix
+          : (
+            try(v.prefix, "-") == "-"
+            ? local.data_defaults.defaults.prefix
+            : v.prefix
+          )
+      ), null)
       project_reuse = ( # type: object({...})
         try(v.project_reuse, null) != null
         ? merge(
@@ -247,6 +110,7 @@ locals {
         )
         : local.data_defaults.defaults.project_reuse
       )
+      quotas = try(v.quotas, {})
       service_encryption_key_ids = coalesce( # type: map(list(string))
         local.data_defaults.overrides.service_encryption_key_ids,
         try(v.service_encryption_key_ids, null),
@@ -267,18 +131,15 @@ locals {
       )
       shared_vpc_service_config = ( # type: object({...})
         try(v.shared_vpc_service_config, null) != null
-        ? merge(
-          {
-            host_project             = null
-            iam_bindings_additive    = {}
-            network_users            = []
-            service_agent_iam        = {}
-            service_agent_subnet_iam = {}
-            service_iam_grants       = []
-            network_subnet_users     = {}
-          },
-          v.shared_vpc_service_config
-        )
+        ? {
+          host_project             = try(v.shared_vpc_service_config.host_project, null)
+          iam_bindings_additive    = try(v.shared_vpc_service_config.iam_bindings_additive, {})
+          network_users            = try(v.shared_vpc_service_config.network_users, [])
+          service_agent_iam        = try(v.shared_vpc_service_config.service_agent_iam, {})
+          service_agent_subnet_iam = try(v.shared_vpc_service_config.service_agent_subnet_iam, {})
+          service_iam_grants       = try(v.shared_vpc_service_config.service_iam_grants, [])
+          network_subnet_users     = try(v.shared_vpc_service_config.network_subnet_users, {})
+        }
         : local.data_defaults.defaults.shared_vpc_service_config
       )
       tag_bindings = coalesce( # type: map(string)
@@ -288,6 +149,7 @@ locals {
       )
       tags = {
         for tag_name, tag_data in try(v.tags, {}) : tag_name => {
+          allowed_values_regex = try(tag_data.allowed_values_regex, null)
           description = try(
             tag_data.description,
             "Managed by the Terraform project-factory module."
@@ -335,12 +197,23 @@ locals {
           : local.data_defaults.defaults.vpc_sc
         )
       )
-      logging_data_access = coalesce( # type: map(object({...}))
-        local.data_defaults.overrides.logging_data_access,
-        try(v.logging_data_access, null),
-        local.data_defaults.defaults.logging_data_access
-      )
-      quotas = try(v.quotas, {})
+      workload_identity_pools = {
+        for wk, wv in try(v.workload_identity_pools, {}) : wk => {
+          display_name = lookup(wv, "display_name", null)
+          description  = lookup(wv, "description", null)
+          disabled     = lookup(wv, "disabled", null)
+          providers = {
+            for pk, pv in try(wv.providers, {}) : pk => {
+              display_name        = lookup(pv, "display_name", null)
+              description         = lookup(pv, "description", null)
+              disabled            = lookup(pv, "disabled", null)
+              attribute_condition = lookup(pv, "attribute_condition", null)
+              attribute_mapping   = lookup(pv, "attribute_mapping", {})
+              identity_provider   = lookup(pv, "identity_provider", {})
+            }
+          }
+        }
+      }
     })
   }
   # tflint-ignore: terraform_unused_declarations
@@ -349,5 +222,94 @@ locals {
     # is used more than once
     for k, v in local._projects_output :
     "${v.prefix != null ? v.prefix : ""}-${v.name}" => k
+  }
+  data_defaults = {
+    defaults = merge(
+      {
+        billing_account = null
+        contacts        = {}
+        deletion_policy = null
+        labels          = {}
+        locations = {
+          bigquery = try(local._data_defaults.defaults.locations.bigquery, null)
+          logging  = try(local._data_defaults.defaults.locations.logging, null)
+          storage  = try(local._data_defaults.defaults.locations.storage, null)
+        }
+        metric_scopes = []
+        parent        = null
+        prefix        = null
+        project_reuse = merge(
+          {
+            use_data_source = true
+            attributes      = null
+          },
+          try(local._data_defaults.defaults.project_reuse, {
+            use_data_source = true
+            attributes      = null
+            }
+          )
+        )
+        service_encryption_key_ids = {}
+        services                   = []
+        shared_vpc_service_config = {
+          host_project             = try(local._data_defaults.defaults.shared_vpc_service_config.host_project, null)
+          iam_bindings_additive    = try(local._data_defaults.defaults.shared_vpc_service_config.iam_bindings_additive, {})
+          network_users            = try(local._data_defaults.defaults.shared_vpc_service_config.network_users, [])
+          service_agent_iam        = try(local._data_defaults.defaults.shared_vpc_service_config.service_agent_iam, {})
+          service_agent_subnet_iam = try(local._data_defaults.defaults.shared_vpc_service_config.service_agent_subnet_iam, {})
+          service_iam_grants       = try(local._data_defaults.defaults.shared_vpc_service_config.service_iam_grants, [])
+          network_subnet_users     = try(local._data_defaults.defaults.shared_vpc_service_config.network_subnet_users, {})
+        }
+        tag_bindings     = {}
+        service_accounts = {}
+        universe         = null
+        vpc_sc = merge(
+          {
+            perimeter_name = null
+            is_dry_run     = false
+          },
+          try(local._data_defaults.defaults.vpc_sc, {
+            perimeter_name = null
+            is_dry_run     = false
+            }
+          )
+        )
+      },
+      try(
+        local._data_defaults.defaults, {}
+      )
+    )
+    # data_overrides default to null's, to mark that they should not override
+    overrides = merge({
+      billing_account = null
+      contacts        = null
+      deletion_policy = null
+      locations = {
+        bigquery = try(local._data_defaults.overrides.locations.bigquery, null)
+        logging  = try(local._data_defaults.overrides.locations.logging, null)
+        storage  = try(local._data_defaults.overrides.locations.storage, null)
+      }
+      parent                     = null
+      prefix                     = null
+      service_encryption_key_ids = null
+      tag_bindings               = null
+      services                   = null
+      service_accounts           = null
+      universe                   = null
+      vpc_sc = try(
+        merge(
+          {
+            perimeter_name = null
+            is_dry_run     = false
+          },
+          local._data_defaults.overrides.vpc_sc
+        ),
+        null
+      )
+      },
+      try(
+        local._data_defaults.overrides, {}
+      )
+    )
   }
 }

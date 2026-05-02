@@ -41,9 +41,10 @@ locals {
   ctx = {
     for k, v in var.context : k => {
       for kk, vv in v : "${local.ctx_p}${k}:${kk}" => vv
-    } if k != "condition_vars"
+    } if !endswith(k, "_vars")
   }
-  ctx_p = "$"
+  ctx_p        = "$"
+  ctx_kms_keys = try(local.ctx.kms_keys, {})
   identities_view = {
     for k, v in local.access_view : k => try(
       zipmap(
@@ -144,7 +145,11 @@ resource "google_bigquery_dataset" "default" {
   dynamic "default_encryption_configuration" {
     for_each = var.encryption_key == null ? [] : [""]
     content {
-      kms_key_name = var.encryption_key
+      kms_key_name = lookup(
+        local.ctx_kms_keys,
+        var.encryption_key,
+        var.encryption_key
+      )
     }
   }
 }
@@ -226,15 +231,6 @@ resource "google_bigquery_dataset_access" "authorized_routines" {
   }
 }
 
-resource "google_bigquery_dataset_iam_binding" "bindings" {
-  for_each   = var.iam
-  project    = local.project_id
-  dataset_id = google_bigquery_dataset.default.dataset_id
-  role       = lookup(local.ctx.custom_roles, each.key, each.key)
-  members = [
-    for v in each.value : lookup(local.ctx.iam_principals, v, v)
-  ]
-}
 
 resource "google_bigquery_table" "default" {
   provider                 = google-beta
@@ -255,7 +251,11 @@ resource "google_bigquery_table" "default" {
   dynamic "encryption_configuration" {
     for_each = each.value.options.encryption_key != null ? [""] : []
     content {
-      kms_key_name = each.value.options.encryption_key
+      kms_key_name = lookup(
+        local.ctx_kms_keys,
+        each.value.options.encryption_key,
+        each.value.options.encryption_key
+      )
     }
   }
 
@@ -373,7 +373,7 @@ resource "google_bigquery_table" "default" {
 }
 
 resource "google_bigquery_table" "views" {
-  depends_on          = [google_bigquery_table.default]
+  depends_on          = [google_bigquery_table.default, google_bigquery_routine.default]
   for_each            = var.views
   project             = local.project_id
   dataset_id          = google_bigquery_dataset.default.dataset_id
@@ -382,7 +382,7 @@ resource "google_bigquery_table" "views" {
   description         = each.value.description
   labels              = each.value.labels
   deletion_protection = each.value.deletion_protection
-  schema              = try(jsonencode(each.value.schema), null)
+  schema              = each.value.schema != null ? jsonencode(each.value.schema) : null
 
   view {
     query          = each.value.query
@@ -445,6 +445,7 @@ resource "google_bigquery_routine" "default" {
   imported_libraries   = each.value.imported_libraries
   determinism_level    = each.value.determinism_level
   data_governance_type = each.value.data_governance_type
+  return_type          = each.value.return_type
   return_table_type    = each.value.return_table_type
   dynamic "arguments" {
     for_each = each.value.arguments

@@ -26,7 +26,7 @@ values:
     private_visibility_config:
     - gke_clusters: []
       networks:
-      - network_url: projects/xxx/global/networks/aaa
+      - network_url: https://www.googleapis.com/compute/v1/projects/xxx/global/networks/aaa
     project: project-id
     reverse_lookup: false
     service_directory_config: []
@@ -63,8 +63,8 @@ values:
     routing_policy:
     - enable_geo_fencing: null
       geo:
-        - location: europe-west8
-          rrdatas: null
+      - location: europe-west8
+        rrdatas: null
       primary_backup: []
       wrr: []
     rrdatas: null

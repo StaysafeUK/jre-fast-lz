@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,66 @@
  * limitations under the License.
  */
 
+
+variable "asset_feeds" {
+  description = "Cloud Asset Inventory feeds."
+  type = map(object({
+    billing_project = string
+    content_type    = optional(string)
+    asset_types     = optional(list(string))
+    asset_names     = optional(list(string))
+    feed_output_config = object({
+      pubsub_destination = object({
+        topic = string
+      })
+    })
+    condition = optional(object({
+      expression  = string
+      title       = optional(string)
+      description = optional(string)
+      location    = optional(string)
+    }))
+  }))
+  default  = {}
+  nullable = false
+  validation {
+    condition = alltrue([
+      for k, v in var.asset_feeds :
+      v.content_type == null || contains(
+        ["RESOURCE", "IAM_POLICY", "ORG_POLICY", "ACCESS_POLICY", "OS_INVENTORY", "RELATIONSHIP"],
+        v.content_type
+      )
+    ])
+    error_message = "Content type must be one of RESOURCE, IAM_POLICY, ORG_POLICY, ACCESS_POLICY, OS_INVENTORY, RELATIONSHIP."
+  }
+}
+
+variable "asset_search" {
+  description = "Cloud Asset Inventory search configurations."
+  type = map(object({
+    asset_types = list(string)
+    query       = optional(string)
+  }))
+  default  = {}
+  nullable = false
+}
+
 variable "contacts" {
   description = "List of essential contacts for this resource. Must be in the form EMAIL -> [NOTIFICATION_TYPES]. Valid notification types are ALL, SUSPENSION, SECURITY, TECHNICAL, BILLING, LEGAL, PRODUCT_UPDATES."
   type        = map(list(string))
   default     = {}
   nullable    = false
+  validation {
+    condition = alltrue(flatten([
+      for k, v in var.contacts : [
+        for vv in v : contains([
+          "ALL", "SUSPENSION", "SECURITY", "TECHNICAL", "BILLING", "LEGAL",
+          "PRODUCT_UPDATES"
+        ], vv)
+      ]
+    ]))
+    error_message = "Invalid contact notification value."
+  }
 }
 
 variable "context" {
@@ -27,7 +82,9 @@ variable "context" {
     bigquery_datasets = optional(map(string), {})
     condition_vars    = optional(map(map(string)), {})
     custom_roles      = optional(map(string), {})
+    email_addresses   = optional(map(string), {})
     iam_principals    = optional(map(string), {})
+    kms_keys          = optional(map(string), {})
     locations         = optional(map(string), {})
     log_buckets       = optional(map(string), {})
     project_ids       = optional(map(string), {})
@@ -35,6 +92,10 @@ variable "context" {
     storage_buckets   = optional(map(string), {})
     tag_keys          = optional(map(string), {})
     tag_values        = optional(map(string), {})
+    tag_vars = optional(object({
+      projects     = optional(map(map(string)), {})
+      organization = optional(map(string), {})
+    }), {})
   })
   nullable = false
   default  = {}
@@ -53,6 +114,8 @@ variable "factories_config" {
     custom_roles                  = optional(string)
     org_policies                  = optional(string)
     org_policy_custom_constraints = optional(string)
+    pam_entitlements              = optional(string)
+    scc_mute_configs              = optional(string)
     scc_sha_custom_modules        = optional(string)
     tags                          = optional(string)
   })
@@ -118,4 +181,14 @@ variable "organization_id" {
     condition     = can(regex("^organizations/[0-9]+", var.organization_id))
     error_message = "The organization_id must in the form organizations/nnn."
   }
+}
+
+variable "service_agents_config" {
+  description = "Service agents configuration."
+  type = object({
+    services      = optional(list(string), [])
+    create_agents = optional(bool, true)
+  })
+  default  = {}
+  nullable = false
 }

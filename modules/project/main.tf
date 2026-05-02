@@ -19,10 +19,24 @@ locals {
   _observability_factory_path = pathexpand(coalesce(
     var.factories_config.observability, "-"
   ))
+  bigquery_reservations_assigments = {
+    for reservation_name, reservation in google_bigquery_reservation.default :
+    reservation_name => {
+      (reservation.location) = {
+        for job_type in distinct([
+          for a in values(google_bigquery_reservation_assignment.default) : a.job_type
+          if a.reservation == reservation.id
+          ]) : job_type => [
+          for a in values(google_bigquery_reservation_assignment.default) : a.assignee
+          if a.reservation == reservation.id && a.job_type == job_type
+        ]
+      }
+    }
+  }
   ctx = {
     for k, v in var.context : k => {
       for kk, vv in v : "${local.ctx_p}${k}:${kk}" => vv
-    } if k != "condition_vars"
+    } if !endswith(k, "_vars")
   }
   ctx_p = "$"
   descriptive_name = (
@@ -75,10 +89,20 @@ locals {
   )
   universe_prefix = var.universe == null ? "" : "${var.universe.prefix}:"
   # available services are those declared, minus any unsupported by universe
-  available_services = tolist(setsubtract(
+  _available_services = setsubtract(
     var.services,
     try(var.universe.unavailable_services, [])
+  )
+  available_services = tolist(setsubtract(
+    local._available_services,
+    ["orgpolicy.googleapis.com"]
   ))
+  enable_orgpolicy_service = contains(local._available_services, "orgpolicy.googleapis.com")
+}
+
+moved {
+  from = google_project_service.project_services["orgpolicy.googleapis.com"]
+  to   = google_project_service.org_policy_service[0]
 }
 
 data "google_project" "project" {
@@ -118,6 +142,14 @@ resource "google_project_service" "project_services" {
   depends_on                 = [google_org_policy_policy.default]
 }
 
+resource "google_project_service" "org_policy_service" {
+  count                      = local.enable_orgpolicy_service ? 1 : 0
+  project                    = local.project.project_id
+  service                    = "orgpolicy.googleapis.com"
+  disable_on_destroy         = var.service_config.disable_on_destroy
+  disable_dependent_services = var.service_config.disable_dependent_services
+}
+
 resource "google_compute_project_metadata_item" "default" {
   for_each = (
     contains(local.available_services, "compute.googleapis.com") ? var.compute_metadata : {}
@@ -136,11 +168,23 @@ resource "google_resource_manager_lien" "lien" {
   reason       = var.lien_reason
 }
 
+resource "google_kms_key_handle" "default" {
+  for_each = var.kms_autokeys
+  project  = local.project.project_id
+  name     = each.key
+  location = try(
+    local.ctx.locations[each.value.location], each.value.location
+  )
+  resource_type_selector = each.value.resource_type_selector
+}
+
 resource "google_essential_contacts_contact" "contact" {
-  provider                            = google-beta
-  for_each                            = var.contacts
-  parent                              = "projects/${local.project.project_id}"
-  email                               = each.key
+  provider = google-beta
+  for_each = var.contacts
+  parent   = "projects/${local.project.project_id}"
+  email = lookup(
+    local.ctx.email_addresses, each.key, each.key
+  )
   language_tag                        = "en"
   notification_category_subscriptions = each.value
   depends_on = [
@@ -153,7 +197,7 @@ resource "google_essential_contacts_contact" "contact" {
 resource "google_monitoring_monitored_project" "primary" {
   provider      = google-beta
   for_each      = toset(var.metric_scopes)
-  metrics_scope = each.value
+  metrics_scope = lookup(local.ctx.project_ids, each.value, each.value)
   name          = local.project.project_id
 }
 

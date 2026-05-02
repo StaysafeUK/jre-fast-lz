@@ -26,9 +26,8 @@ values:
       goog-terraform-provisioned: 'true'
     labels: null
     location: europe-west8
-    name: hello
+    name: example-hello
     project: project-id
-    scaling: []
     template:
     - annotations: null
       containers:
@@ -55,8 +54,8 @@ values:
     machine_type: e2-micro
     max_instances: 10
     min_instances: 3
-    name: hello
-    network: projects/xxx/global/networks/aaa
+    name: example-hello
+    network: https://www.googleapis.com/compute/v1/projects/xxx/global/networks/aaa
     project: project-id
     region: europe-west8
     subnet: []
@@ -65,5 +64,3 @@ values:
 counts:
   google_cloud_run_v2_service: 1
   google_vpc_access_connector: 1
-  modules: 1
-  resources: 2

@@ -19,18 +19,34 @@ output "iam_principals" {
   value       = local.iam_principals
 }
 
-output "locations" {
-  description = "Default locations."
-  value       = local.defaults.locations
-}
-
 output "projects" {
   description = "Attributes for managed projects."
   value       = module.factory.projects
+}
+
+output "subnet_ips" {
+  description = "Map of subnet address ranges keyed by VPC and subnet name."
+  value = {
+    for k, v in module.vpcs.vpcs : k => v.subnet_ips
+  }
+}
+
+output "subnet_self_links" {
+  description = "Map of subnet self links keyed by VPC and subnet name."
+  value = {
+    for k, v in module.vpcs.vpcs : k => v.subnet_ids
+  }
 }
 
 output "tfvars" {
   description = "Stage tfvars."
   value       = local.of_tfvars
   sensitive   = true
+}
+
+output "vpc_self_links" {
+  description = "Map of VPC self links keyed by VPC name."
+  value = {
+    for k, v in module.vpcs.vpcs : k => v.id
+  }
 }

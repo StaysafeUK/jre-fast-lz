@@ -19,6 +19,7 @@ variable "context" {
   type = object({
     condition_vars        = optional(map(map(string)), {})
     custom_roles          = optional(map(string), {})
+    email_addresses       = optional(map(string), {})
     folder_ids            = optional(map(string), {})
     iam_principals        = optional(map(string), {})
     kms_keys              = optional(map(string), {})
@@ -26,8 +27,12 @@ variable "context" {
     notification_channels = optional(map(string), {})
     project_ids           = optional(map(string), {})
     tag_values            = optional(map(string), {})
-    vpc_host_projects     = optional(map(string), {})
-    vpc_sc_perimeters     = optional(map(string), {})
+    tag_vars = optional(object({
+      projects     = optional(map(map(string)), {})
+      organization = optional(map(string), {})
+    }), {})
+    vpc_host_projects = optional(map(string), {})
+    vpc_sc_perimeters = optional(map(string), {})
   })
   default  = {}
   nullable = false
@@ -36,13 +41,13 @@ variable "context" {
 variable "factories_config" {
   description = "Path to folder with YAML resource description data files."
   type = object({
-    defaults = optional(string, "data/defaults.yaml")
-    folders  = optional(string, "data/folders")
-    projects = optional(string, "data/projects")
-    budgets = optional(object({
-      billing_account_id = string
-      data               = string
-    }))
+    dataset = optional(string, "datasets/classic")
+    paths = optional(object({
+      defaults = optional(string, "defaults.yaml")
+      folders  = optional(string, "folders")
+      projects = optional(string, "projects")
+      budgets  = optional(string)
+    }), {})
   })
   nullable = false
   default  = {}

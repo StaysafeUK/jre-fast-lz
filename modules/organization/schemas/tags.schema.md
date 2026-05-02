@@ -6,6 +6,7 @@
 
 *additional properties: false*
 
+- **allowed_values_regex**: *string*
 - **name**: *string*
 - **description**: *string*
 - **id**: *string*
@@ -15,7 +16,7 @@
 - **iam_bindings_additive**: *reference([iam_bindings_additive](#refs-iam_bindings_additive))*
 - **values**: *object*
   <br>*additional properties: false*
-  - **`^[a-z-][a-z0-9-]+$`**: *object*
+  - **`^[a-z-][^\\'"/]+$`**: *object*
     <br>*additional properties: false*
     - **name**: *string*
     - **description**: *string*
@@ -30,14 +31,14 @@
   <br>*additional properties: false*
   - **`^roles/`**: *array*
     - items: *string*
-      <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|[a-z])*
+      <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)*
 - **iam_bindings**<a name="refs-iam_bindings"></a>: *object*
   <br>*additional properties: false*
   - **`^[a-z0-9_-]+$`**: *object*
     <br>*additional properties: false*
     - **members**: *array*
       - items: *string*
-        <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|[a-z])*
+        <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)*
     - **role**: *string*
       <br>*pattern: ^roles/*
     - **condition**: *object*
@@ -50,7 +51,7 @@
   - **`^[a-z0-9_-]+$`**: *object*
     <br>*additional properties: false*
     - **member**: *string*
-      <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|[a-z])*
+      <br>*pattern: ^(?:domain:|group:|serviceAccount:|user:|principal:|principalSet:|\$iam_principals:[a-z0-9_-]+)*
     - **role**: *string*
       <br>*pattern: ^[a-zA-Z0-9_/]+$*
     - **condition**: *object*

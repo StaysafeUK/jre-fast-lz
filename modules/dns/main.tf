@@ -69,6 +69,7 @@ resource "google_dns_managed_zone" "dns_managed_zone" {
   dns_name       = var.zone_config.domain
   description    = var.description
   force_destroy  = var.force_destroy
+  labels         = var.labels
   visibility     = local.visibility
   reverse_lookup = var.zone_config.private == null ? false : var.zone_config.private.reverse_managed
 
@@ -117,7 +118,9 @@ resource "google_dns_managed_zone" "dns_managed_zone" {
     for_each = try(var.zone_config.peering.peer_network, null) == null ? [] : [""]
     content {
       target_network {
-        network_url = var.zone_config.peering.peer_network
+        network_url = lookup(
+          local.ctx.networks, var.zone_config.peering.peer_network, var.zone_config.peering.peer_network
+        )
       }
     }
   }

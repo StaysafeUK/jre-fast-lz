@@ -31,7 +31,6 @@ values:
     location: europe-west8
     name: service
     project: project-id
-    scaling: []
     template:
     - annotations: null
       containers:
@@ -67,5 +66,3 @@ values:
 
 counts:
   google_cloud_run_v2_service: 1
-  modules: 1
-  resources: 1

@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ values:
     address_type: INTERNAL
     description: Terraform managed.
     name: googleapis
-    network: projects/xxx/global/networks/aaa
+    network: https://www.googleapis.com/compute/v1/projects/xxx/global/networks/aaa
     project: project-id
     purpose: PRIVATE_SERVICE_CONNECT
   module.addresses.google_compute_global_forwarding_rule.psc_consumer["googleapis"]:
     load_balancing_scheme: ''
     metadata_filters: []
     name: googleapis
-    network: projects/xxx/global/networks/aaa
+    network: https://www.googleapis.com/compute/v1/projects/xxx/global/networks/aaa
     port_range: null
     project: project-id
     source_ip_ranges: null

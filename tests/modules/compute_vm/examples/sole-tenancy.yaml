@@ -22,7 +22,7 @@ values:
       disk_encryption_key_raw: null
       initialize_params:
       - enable_confidential_compute: null
-        image: projects/debian-cloud/global/images/family/debian-11
+        image: debian-cloud/debian-13
         resource_manager_tags: null
         size: 10
         type: pd-balanced
@@ -42,7 +42,7 @@ values:
     - access_config: []
       alias_ip_range: []
       ipv6_access_config: []
-      network: projects/xxx/global/networks/aaa
+      network: https://www.googleapis.com/compute/v1/projects/xxx/global/networks/aaa
       nic_type: null
       queue_count: null
       security_policy: null

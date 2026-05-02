@@ -18,26 +18,32 @@ locals {
   ctx = {
     for k, v in var.context : k => {
       for kk, vv in v : "${local.ctx_p}${k}:${kk}" => vv
-    } if k != "condition_vars"
+    } if !endswith(k, "_vars")
   }
   ctx_p = "$"
+  _folder_id = (
+    var.id == null
+    ? null
+    : lookup(local.ctx.folder_ids, var.id, var.id)
+  )
   folder_id = (
     var.assured_workload_config == null
     ? (
       var.folder_create
-      ? try(google_folder.folder[0].id, null)
-      : var.id
+      ? coalesce(local._folder_id, try(google_folder.folder[0].id, ""))
+      : local._folder_id
     )
     : format("folders/%s", try(google_assured_workloads_workload.folder[0].resources[0].resource_id, ""))
   )
+  folder_number = split("/", local.folder_id)[1]
   aw_parent = (
-    # Assured Workload only accepls folder as a parent and uses organization as a parent when no value provided.
+    # Assured Workload only accepts folder as a parent and uses organization as a parent when no value provided.
     var.parent == null
     ? null
     : (
       try(startswith(var.parent, "folders/"))
       ? var.parent
-      : null
+      : lookup(local.ctx.folder_ids, var.parent, null)
     )
   )
 }
@@ -49,11 +55,24 @@ resource "google_folder" "folder" {
   deletion_protection = var.deletion_protection
 }
 
+resource "google_kms_autokey_config" "default" {
+  provider = google-beta
+  count    = var.autokey_config != null ? 1 : 0
+  folder   = local.folder_id
+  key_project = try(
+    "projects/${local.ctx.project_ids[var.autokey_config.project]}",
+    "projects/${local.ctx.project_numbers[var.autokey_config.project]}",
+    var.autokey_config.project
+  )
+}
+
 resource "google_essential_contacts_contact" "contact" {
-  provider                            = google-beta
-  for_each                            = var.contacts
-  parent                              = local.folder_id
-  email                               = each.key
+  provider = google-beta
+  for_each = var.contacts
+  parent   = local.folder_id
+  email = lookup(
+    local.ctx.email_addresses, each.key, each.key
+  )
   language_tag                        = "en"
   notification_category_subscriptions = each.value
   depends_on = [
@@ -75,7 +94,7 @@ resource "google_assured_workloads_workload" "folder" {
   compliance_regime            = var.assured_workload_config.compliance_regime
   display_name                 = var.assured_workload_config.display_name
   location                     = var.assured_workload_config.location
-  organization                 = var.assured_workload_config.organization
+  organization                 = templatestring(var.assured_workload_config.organization, var.context.condition_vars)
   enable_sovereign_controls    = var.assured_workload_config.enable_sovereign_controls
   labels                       = var.assured_workload_config.labels
   partner                      = var.assured_workload_config.partner

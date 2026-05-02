@@ -80,9 +80,21 @@ output "network_attachment_ids" {
   }
 }
 
+output "network_id" {
+  description = "Numeric network id."
+  value       = local.network.network_id
+  depends_on = [
+    google_compute_network_peering.local,
+    google_compute_network_peering.remote,
+    google_compute_shared_vpc_host_project.shared_vpc_host,
+    google_compute_shared_vpc_service_project.service_projects,
+    google_service_networking_connection.psa_connection
+  ]
+}
+
 output "project_id" {
   description = "Project ID containing the network. Use this when you need to create resources *after* the VPC is fully set up (e.g. subnets created, shared VPC service projects attached, Private Service Networking configured)."
-  value       = var.project_id
+  value       = local.project_id
   depends_on = [
     google_compute_subnetwork.subnetwork,
     google_compute_network_peering.local,
@@ -103,6 +115,16 @@ output "self_link" {
     google_compute_shared_vpc_service_project.service_projects,
     google_service_networking_connection.psa_connection
   ]
+}
+
+output "service_connection_policies" {
+  description = "Service connection policy resources."
+  value       = google_network_connectivity_service_connection_policy.service_connection_policy
+}
+
+output "service_connection_policy_ids" {
+  description = "Service connection policy IDs."
+  value       = { for k, v in google_network_connectivity_service_connection_policy.service_connection_policy : k => v.id }
 }
 
 output "subnet_ids" {

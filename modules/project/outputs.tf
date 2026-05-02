@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,21 @@ output "alert_ids" {
   }
 }
 
+output "asset_search_results" {
+  description = "Cloud Asset Inventory search results."
+  value = {
+    for k, v in data.google_cloud_asset_search_all_resources.default : k => v.results
+  }
+}
+
+output "bigquery_reservations" {
+  description = "BigQuery reservations and assignments."
+  value = {
+    reservations = google_bigquery_reservation.default
+    assignments  = local.bigquery_reservations_assigments
+  }
+}
+
 output "custom_role_id" {
   description = "Map of custom role IDs created in the project."
   value       = local.custom_role_ids
@@ -34,10 +49,7 @@ output "custom_roles" {
 
 output "default_service_accounts" {
   description = "Emails of the default service accounts for this project."
-  value = {
-    compute = "${local.project.number}-compute@developer.gserviceaccount.com"
-    gae     = "${local.project.project_id}@appspot.gserviceaccount.com"
-  }
+  value       = local.default_service_accounts
 }
 
 output "id" {
@@ -56,6 +68,13 @@ output "id" {
     google_project_service_identity.default,
     google_project_iam_member.service_agents
   ]
+}
+
+output "kms_autokeys" {
+  description = "KMS Autokey key ids."
+  value = {
+    for k, v in google_kms_key_handle.default : k => v.kms_key
+  }
 }
 
 output "name" {
@@ -200,5 +219,31 @@ output "tag_values" {
   value = {
     for k, v in google_tags_tag_value.default :
     k => v if try(local.tag_values[k].tag_network, null) == null
+  }
+}
+
+output "workload_identity_pool_ids" {
+  description = "Workload identity provider ids."
+  value = {
+    for k, v in google_iam_workload_identity_pool.default : k => v.name
+  }
+}
+
+output "workload_identity_provider_ids" {
+  description = "Workload identity provider attributes."
+  value = {
+    for k, v in google_iam_workload_identity_pool_provider.default :
+    k => v.name
+  }
+}
+
+output "workload_identity_providers" {
+  description = "Workload identity provider attributes."
+  value = {
+    for k, v in local.wif_providers : k => {
+      name = google_iam_workload_identity_pool_provider.default[k].name
+      pool = google_iam_workload_identity_pool.default[v.pool].name
+      type = try(v.identity_provider.oidc.template, null)
+    }
   }
 }

@@ -51,52 +51,22 @@
               "additionalProperties": false,
               "patternProperties": {
                 "^[a-z0-9_-]+$": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "type": "string"
                 }
               }
             },
-            "logging_data_access": {
+            "locations": {
               "type": "object",
-              "default": {},
-              "additionalProperties": {
-                "type": "object",
-                "properties": {
-                  "ADMIN_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_WRITE": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+              "additionalProperties": false,
+              "properties": {
+                "bigquery": {
+                  "type": "string"
+                },
+                "logging": {
+                  "type": "string"
+                },
+                "storage": {
+                  "type": "string"
                 }
               }
             },
@@ -244,9 +214,6 @@
                 "host_project"
               ]
             },
-            "storage_location": {
-              "type": "string"
-            },
             "tag_bindings": {
               "type": "object",
               "default": {},
@@ -312,10 +279,7 @@
               "additionalProperties": false,
               "patternProperties": {
                 "^[a-z0-9_-]+$": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "type": "string"
                 }
               }
             },
@@ -404,45 +368,18 @@
                 "ABANDON"
               ]
             },
-            "logging_data_access": {
+            "locations": {
               "type": "object",
-              "default": {},
-              "additionalProperties": {
-                "type": "object",
-                "properties": {
-                  "ADMIN_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_READ": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "DATA_WRITE": {
-                    "type": "object",
-                    "properties": {
-                      "exempted_members": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+              "additionalProperties": false,
+              "properties": {
+                "bigquery": {
+                  "type": "string"
+                },
+                "logging": {
+                  "type": "string"
+                },
+                "storage": {
+                  "type": "string"
                 }
               }
             },
@@ -490,9 +427,6 @@
               "items": {
                 "type": "string"
               }
-            },
-            "storage_location": {
-              "type": "string"
             },
             "tag_bindings": {
               "type": "object",
@@ -542,7 +476,97 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "custom_roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "email_addresses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "folder_ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "kms_keys": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "iam_principals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "locations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "notification_channels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "project_ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "service_account_ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tag_keys": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tag_values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tag_vars": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "projects": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "organization": {
+              "type": "string"
+            }
+          }
+        },
+        "vpc_host_projects": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "vpc_sc_perimeters": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -557,8 +581,42 @@
         "local_path": {
           "type": "string"
         },
+        "providers_template_path": {
+          "type": "string",
+          "default": "assets/providers.tf.tpl"
+        },
         "storage_bucket": {
           "type": "string"
+        },
+        "providers_pattern": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "service_accounts_match",
+            "storage_bucket"
+          ],
+          "properties": {
+            "service_accounts_match": {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "ro": {
+                  "type": "string"
+                },
+                "rw": {
+                  "type": "string"
+                }
+              }
+            },
+            "storage_bucket": {
+              "type": "string"
+            },
+            "storage_folders_create": {
+              "type": "boolean",
+              "default": true
+            }
+          }
         },
         "providers": {
           "type": "object",
@@ -568,17 +626,18 @@
               "type": "object",
               "additionalProperties": false,
               "required": [
-                "bucket",
-                "service_account"
+                "service_account",
+                "storage_bucket"
               ],
               "properties": {
-                "bucket": {
-                  "type": "string"
-                },
-                "prefix": {
-                  "type": "string"
-                },
                 "service_account": {
+                  "type": "string"
+                },
+                "set_prefix": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "storage_bucket": {
                   "type": "string"
                 }
               }
@@ -593,7 +652,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^(?:roles/|\\$custom_roles:)": {
+        "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)": {
           "type": "array",
           "items": {
             "type": "string",
@@ -619,7 +678,7 @@
             },
             "role": {
               "type": "string",
-              "pattern": "^(?:roles/|\\$custom_roles:)"
+              "pattern": "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)"
             },
             "condition": {
               "type": "object",
@@ -658,7 +717,7 @@
             },
             "role": {
               "type": "string",
-              "pattern": "^(?:roles/|\\$custom_roles:)"
+              "pattern": "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)"
             },
             "condition": {
               "type": "object",
@@ -691,7 +750,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^(?:roles/|\\$custom_roles:)"
+            "pattern": "^(?:roles/|\\$custom_roles:|organizations/[0-9]+/roles/|([a-z0-9.]+:)?projects/[a-z0-9-]+/roles/)"
           }
         }
       }

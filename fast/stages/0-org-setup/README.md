@@ -406,7 +406,7 @@ The default paths point to the dataset in the `datasets/classic` folder which de
 - **billing_accounts** (`[dataset]/billing-accounts`) \
   folder-level factory where each YAML file defines billing-account level IAM for one billing account; only used for externally managed accounts
 - **organization** (`[dataset]/organization/.config.yaml`) \
-  file-level factory to define organization IAM and log sinks
+  file-level factory to define organization IAM, service agents, and log sinks
   - **custom roles** (`[dataset]/organization/custom-roles`) \
     folder-level factory to define organization-level custom roles
   - **org policies** (`[dataset]/organization/org-policies`) \
@@ -515,7 +515,7 @@ logging_sinks:
 
 ### Organization configuration
 
-The default dataset implements a classic FAST design, recreating the required custom roles, IAM bindings, org policies, tags, and log sinks via the factories described in a previous section.
+The default dataset implements a classic FAST design, recreating the required custom roles, IAM bindings, org policies, tags, service agents, and log sinks via the factories described in a previous section.
 
 Compared to classic FAST this approach makes org-level configuration explicit, allowing easy customization of IAM and all other attributes. Before running this stage, check that the data files match your expected design.
 
@@ -914,8 +914,8 @@ Define values for the `var.environments` variable in a tfvars file.
 | name | description | type | required | default |
 |---|---|:---:|:---:|:---:|
 | [context](variables.tf#L17) | Context-specific interpolations. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |
-| [factories_config](variables.tf#L41) | Configuration for the resource factories or external data. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |
-| [org_policies_imports](variables.tf#L61) | List of org policies to import. These need to also be defined in data files. | <code>list&#40;string&#41;</code> |  | <code>&#91;&#93;</code> |
+| [factories_config](variables.tf#L45) | Configuration for the resource factories or external data. | <code>object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |
+| [org_policies_imports](variables.tf#L65) | List of org policies to import. These need to also be defined in data files. | <code>list&#40;string&#41;</code> |  | <code>&#91;&#93;</code> |
 
 ## Outputs
 

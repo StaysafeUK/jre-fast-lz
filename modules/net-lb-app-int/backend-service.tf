@@ -37,9 +37,14 @@ locals {
       for k, v in google_compute_region_network_endpoint.internet : k => v.id
     }
   )
-  hc_ids = {
-    for k, v in google_compute_health_check.default : k => v.id
-  }
+  hc_ids = merge(
+    {
+      for k, v in google_compute_health_check.default : k => v.id
+    },
+    {
+      for k, v in google_compute_region_health_check.default : k => v.id
+    }
+  )
 }
 
 resource "google_compute_region_backend_service" "default" {
@@ -75,7 +80,6 @@ resource "google_compute_region_backend_service" "default" {
       balancing_mode  = backend.value.balancing_mode
       capacity_scaler = backend.value.capacity_scaler
       description     = backend.value.description
-      failover        = backend.value.failover
       max_connections = try(
         backend.value.max_connections.per_group, null
       )
@@ -148,18 +152,6 @@ resource "google_compute_region_backend_service" "default" {
     }
   }
 
-  dynamic "failover_policy" {
-    for_each = (
-      each.value.failover_config == null ? [] : [each.value.failover_config]
-    )
-    iterator = fc
-    content {
-      disable_connection_drain_on_failover = fc.value.disable_conn_drain
-      drop_traffic_if_unhealthy            = fc.value.drop_traffic_if_unhealthy
-      failover_ratio                       = fc.value.ratio
-    }
-  }
-
   dynamic "iap" {
     for_each = each.value.iap_config == null ? [] : [each.value.iap_config]
     content {
@@ -171,10 +163,12 @@ resource "google_compute_region_backend_service" "default" {
   }
 
   dynamic "log_config" {
-    for_each = each.value.log_sample_rate == null ? [] : [""]
+    for_each = each.value.log_config == null ? [] : [""]
     content {
-      enable      = true
-      sample_rate = each.value.log_sample_rate
+      enable          = each.value.log_config.enable
+      sample_rate     = each.value.log_config.sample_rate
+      optional_mode   = each.value.log_config.optional_mode
+      optional_fields = each.value.log_config.optional_fields
     }
   }
 

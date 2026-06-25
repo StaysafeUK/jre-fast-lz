@@ -74,6 +74,10 @@ locals {
   org_tag_values = {
     for k, v in module.organization[0].tag_values : k => v.id
   }
+  org_tag_vars = {
+    for k, v in module.organization[0].tag_keys :
+    k => v.namespaced_name if try(v.allowed_values_regex, "") != ""
+  }
 }
 
 module "organization" {
@@ -90,7 +94,8 @@ module "organization" {
     email_addresses = local.ctx.email_addresses
     locations       = local.ctx.locations
   }
-  contacts = lookup(local.organization, "contacts", {})
+  contacts              = lookup(local.organization, "contacts", {})
+  service_agents_config = lookup(local.organization, "service_agents_config", {})
   factories_config = {
     custom_roles           = "${local.paths.organization}/custom-roles"
     tags                   = "${local.paths.organization}/tags"
@@ -122,7 +127,11 @@ module "organization-iam" {
     )
     iam_principals = merge(
       local.ctx.iam_principals,
-      module.factory.iam_principals
+      module.factory.iam_principals,
+      {
+        for k, v in module.organization[0].service_agents :
+        "service_agents/${k}" => v.iam_email
+      }
     )
     log_buckets = module.factory.log_buckets
     project_ids = merge(
@@ -138,6 +147,12 @@ module "organization-iam" {
       local.ctx.tag_values,
       local.org_tag_values
     )
+    tag_vars = merge(local.ctx.tag_vars, {
+      organization = merge(
+        try(local.ctx.tag_vars.organization, {}),
+        local.org_tag_vars
+      )
+    })
   })
   factories_config = {
     org_policy_custom_constraints = "${local.paths.organization}/custom-constraints"
@@ -168,4 +183,7 @@ module "organization-iam" {
   tags_config = {
     force_context_ids = true
   }
+  iam_deny_policies = lookup(
+    local.organization, "iam_deny_policies", {}
+  )
 }

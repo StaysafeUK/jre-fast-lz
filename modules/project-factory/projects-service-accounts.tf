@@ -80,10 +80,11 @@ module "service-accounts" {
     for k in local.projects_service_accounts :
     "${k.project_key}/${k.name}" => k
   }
-  project_id   = module.projects[each.value.project_key].project_id
-  name         = each.value.name
-  description  = each.value.description
-  display_name = each.value.display_name
+  project_id     = module.projects[each.value.project_key].project_id
+  project_number = module.projects[each.value.project_key].number
+  name           = each.value.name
+  description    = each.value.description
+  display_name   = each.value.display_name
   context = merge(local.ctx, {
     tag_vars = {
       projects     = merge(try(local.ctx.tag_vars.projects, {}), local.tag_vars_projects)
@@ -101,7 +102,12 @@ module "service-accounts" {
   tag_bindings = each.value.tag_bindings
 }
 
-module "service_accounts-iam" {
+moved {
+  from = module.service_accounts-iam
+  to   = module.service-accounts-iam
+}
+
+module "service-accounts-iam" {
   source = "../iam-service-account"
   for_each = {
     for k in local.projects_service_accounts :

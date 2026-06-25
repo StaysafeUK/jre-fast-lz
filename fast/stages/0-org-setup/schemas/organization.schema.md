@@ -56,6 +56,29 @@
 - **iam_by_principals**: *reference([iam_by_principals](#refs-iam_by_principals))*
 - **iam_by_principals_conditional**: *reference([iam_by_principals_conditional](#refs-iam_by_principals_conditional))*
 - **iam_by_principals_additive**: *reference([iam_by_principals](#refs-iam_by_principals))*
+- **iam_deny_policies**: *object*
+  <br>*additional properties: false*
+  - **`^[a-z0-9-]+$`**: *object*
+    <br>*additional properties: false*
+    - **display_name**: *string*
+    - ⁺**rules**: *array*
+      - items: *object*
+        <br>*additional properties: false*
+        - **description**: *string*
+        - ⁺**denied_permissions**: *array*
+          - items: *string*
+        - ⁺**denied_principals**: *array*
+          - items: *string*
+        - **denial_condition**: *object*
+          <br>*additional properties: false*
+          - ⁺**expression**: *string*
+          - **title**: *string*
+          - **description**: *string*
+          - **location**: *string*
+        - **exception_permissions**: *array*
+          - items: *string*
+        - **exception_principals**: *array*
+          - items: *string*
 - **logging**: *object*
   <br>*additional properties: false*
   - **kms_key_name**: *string*
@@ -96,6 +119,11 @@
           - **location**: *string*
           - **title**: *string*
 - **pam_entitlements**: *reference([pam_entitlements](#refs-pam_entitlements))*
+- **service_agents_config**: *object*
+  <br>*additional properties: false*
+  - **create_agents**: *boolean*
+  - **services**: *array*
+    - items: *string*
 - **tags**: *object*
   <br>*additional properties: object*
 - **workforce_identity_pools**: *object*
@@ -124,11 +152,24 @@
         - **attribute_mapping_template**: *string*
           <br>*enum: ['azuread', 'okta']*
         - **disabled**: *boolean*
+        - **detailed_audit_logging**: *boolean*
         - **identity_provider**: *object*
         - **oauth2_client_config**: *object*
           <br>*additional properties: false*
           - **extended_attributes**: *reference([wfif_oauth2_client_attrs](#refs-wfif_oauth2_client_attrs))*
           - **extra_attributes**: *reference([wfif_oauth2_client_attrs](#refs-wfif_oauth2_client_attrs))*
+        - **scim_tenant**: *object*
+          <br>*additional properties: false*
+          - ⁺**id**: *string*
+          - ⁺**claim_mapping**: *object*
+            <br>*additional properties: string*
+          - **location**: *string*
+            <br>*default: global*
+          - **display_name**: *string*
+          - **description**: *string*
+          - **hard_delete**: *boolean*
+        - **scim_usage**: *string*
+          <br>*enum: ['ENABLED_FOR_GROUPS']*
 
 ## Definitions
 

@@ -22,7 +22,8 @@
       <br>*enum: ['PREVENT', 'DELETE', 'ABANDON']*
     - **labels**: *object*
       <br>*additional properties: false*
-      - **`^[a-z0-9_-]+$`**: *string*
+      - **`^[a-z][a-z0-9_-]{0,62}$`**: *string*
+        <br>*pattern: ^[a-z0-9_-]{0,63}$*
     - **locations**: *object*
       <br>*additional properties: false*
       - **bigquery**: *string*
@@ -81,7 +82,8 @@
         - items: *string*
     - **labels**: *object*
       <br>*additional properties: false*
-      - **`^[a-z0-9_-]+$`**: *string*
+      - **`^[a-z][a-z0-9_-]{0,62}$`**: *string*
+        <br>*pattern: ^[a-z0-9_-]{0,63}$*
     - **metric_scopes**: *array*
       - items: *string*
     - **service_encryption_key_ids**: *object*
@@ -129,8 +131,78 @@
     - **vpc_sc**: *object*
       - ⁺**perimeter_name**: *string*
       - **is_dry_run**: *boolean*
+- **vpcs**: *object*
+  <br>*additional properties: false*
+  - **defaults**: *object*
+    <br>*additional properties: false*
+    - **project_id**: *string*
+    - **description**: *string*
+    - **auto_create_subnetworks**: *boolean*
+    - **delete_default_routes_on_create**: *boolean*
+    - **mtu**: *number*
+    - **routing_mode**: *string*
+      <br>*enum: ['GLOBAL', 'REGIONAL']*
+    - **firewall_policy_enforcement_order**: *string*
+      <br>*enum: ['BEFORE_CLASSIC_FIREWALL', 'AFTER_CLASSIC_FIREWALL']*
+    - **create_googleapis_routes**: *object*
+      <br>*additional properties: false*
+      - **directpath**: *boolean*
+      - **directpath-6**: *boolean*
+      - **private**: *boolean*
+      - **private-6**: *boolean*
+      - **restricted**: *boolean*
+      - **restricted-6**: *boolean*
+    - **dns_policy**: *object*
+      <br>*additional properties: false*
+      - **inbound**: *boolean*
+      - **logging**: *boolean*
+      - **outbound**: *object*
+        <br>*additional properties: false*
+        - **private_ns**: *array*
+          - items: *string*
+        - **public_ns**: *array*
+          - items: *string*
+    - **ipv6_config**: *object*
+      <br>*additional properties: false*
+      - **enable_ula_internal**: *boolean*
+      - **internal_range**: *string*
+  - **overrides**: *object*
+    <br>*additional properties: false*
+    - **project_id**: *string*
+    - **description**: *string*
+    - **auto_create_subnetworks**: *boolean*
+    - **delete_default_routes_on_create**: *boolean*
+    - **mtu**: *number*
+    - **routing_mode**: *string*
+      <br>*enum: ['GLOBAL', 'REGIONAL']*
+    - **firewall_policy_enforcement_order**: *string*
+      <br>*enum: ['BEFORE_CLASSIC_FIREWALL', 'AFTER_CLASSIC_FIREWALL']*
+    - **create_googleapis_routes**: *object*
+      <br>*additional properties: false*
+      - **directpath**: *boolean*
+      - **directpath-6**: *boolean*
+      - **private**: *boolean*
+      - **private-6**: *boolean*
+      - **restricted**: *boolean*
+      - **restricted-6**: *boolean*
+    - **dns_policy**: *object*
+      <br>*additional properties: false*
+      - **inbound**: *boolean*
+      - **logging**: *boolean*
+      - **outbound**: *object*
+        <br>*additional properties: false*
+        - **private_ns**: *array*
+          - items: *string*
+        - **public_ns**: *array*
+          - items: *string*
+    - **ipv6_config**: *object*
+      <br>*additional properties: false*
+      - **enable_ula_internal**: *boolean*
+      - **internal_range**: *string*
 - **context**: *object*
   <br>*additional properties: false*
+  - **cidr_ranges_sets**: *object*
+    <br>*additional properties: array*
   - **custom_roles**: *object*
     <br>*additional properties: string*
   - **email_addresses**: *object*

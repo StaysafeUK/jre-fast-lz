@@ -111,6 +111,9 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
+                "display_name": {
+                  "type": "string"
+                },
                 "description": {
                   "type": "string"
                 },
@@ -143,6 +146,9 @@
                 },
                 "iam_storage_roles": {
                   "$ref": "#/$defs/iam_storage_roles"
+                },
+                "tag_bindings": {
+                  "$ref": "#/$defs/tag_bindings"
                 }
               }
             }
@@ -297,7 +303,13 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "aspect_types": {
+          "type": "string"
+        },
         "custom_roles": {
+          "type": "string"
+        },
+        "data_catalog_taxonomy": {
           "type": "string"
         },
         "observability": {
@@ -334,6 +346,85 @@
     },
     "iam_by_principals_additive": {
       "$ref": "#/$defs/iam_by_principals"
+    },
+    "iam_deny_policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z0-9-]+$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rules"
+          ],
+          "properties": {
+            "display_name": {
+              "type": "string"
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "denied_permissions",
+                  "denied_principals"
+                ],
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "denied_permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "denied_principals": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "denial_condition": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "expression"
+                    ],
+                    "properties": {
+                      "expression": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "location": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "exception_permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "exception_principals": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "kms": {
       "type": "object",
@@ -455,7 +546,7 @@
       }
     },
     "labels": {
-      "type": "object"
+      "$ref": "#/$defs/labels"
     },
     "pam_entitlements": {
       "$ref": "#/$defs/pam_entitlements"
@@ -495,7 +586,7 @@
           }
         },
         "labels": {
-          "type": "object"
+          "$ref": "#/$defs/labels"
         },
         "location": {
           "type": "string"
@@ -724,6 +815,27 @@
             "tag_bindings": {
               "$ref": "#/$defs/tag_bindings"
             }
+          }
+        }
+      }
+    },
+    "service_agents_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create_primary_agents": {
+          "type": "boolean"
+        },
+        "grant_default_roles": {
+          "type": "boolean"
+        },
+        "grant_service_agent_editor": {
+          "type": "boolean"
+        },
+        "skip_iam": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -1079,6 +1191,16 @@
     }
   },
   "$defs": {
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9_-]{0,62}$": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]{0,63}$"
+        }
+      }
+    },
     "bucket": {
       "type": "object",
       "additionalProperties": false,
@@ -1109,10 +1231,7 @@
           "type": "boolean"
         },
         "labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
+          "$ref": "#/$defs/labels"
         },
         "lifecycle_rules": {
           "type": "object",
@@ -1693,10 +1812,7 @@
           "type": "string"
         },
         "labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
+          "$ref": "#/$defs/labels"
         },
         "message_retention_duration": {
           "type": "string"
@@ -1759,10 +1875,7 @@
                   "$ref": "#/$defs/iam_bindings_additive"
                 },
                 "labels": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
+                  "$ref": "#/$defs/labels"
                 },
                 "message_retention_duration": {
                   "type": "string"

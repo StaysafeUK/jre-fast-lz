@@ -35,4 +35,16 @@ echo "Applying Stage 1 - VPC Service Controls..."
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:iac-vpcsc-rw@${PROJECT_ID}.iam.gserviceaccount.com" --role="roles/serviceusage.serviceUsageConsumer"
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:iac-vpcsc-ro@${PROJECT_ID}.iam.gserviceaccount.com" --role="roles/serviceusage.serviceUsageConsumer"
 
-echo "Done! All serviceusage consumer roles successfully applied."
+# Import already existing projects into Terraform state to resolve 409 Already Exists errors
+# This happens because the projects were partially created on Google Cloud before the billing quota errored out,
+# preventing the state from saving. This adopts them cleanly back into the Terraform state.
+echo "--------------------------------------------------------"
+echo "Checking if we need to import existing projects into Terraform state..."
+echo "--------------------------------------------------------"
+
+# Run import commands (using || true so the script continues if a project doesn't exist yet)
+terraform import 'module.projects.module.projects["net-core-0"].google_project.project[0]' placard-prod-net-core-0 || true
+terraform import 'module.projects.module.projects["net-dev-0"].google_project.project[0]' placard-dev-net-spoke-0 || true
+terraform import 'module.projects.module.projects["net-prod-0"].google_project.project[0]' placard-prod-net-prod-0 || true
+
+echo "Done! All configurations and imports successfully handled."

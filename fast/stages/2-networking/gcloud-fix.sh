@@ -35,6 +35,15 @@ echo "Applying Stage 1 - VPC Service Controls..."
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:iac-vpcsc-rw@${PROJECT_ID}.iam.gserviceaccount.com" --role="roles/serviceusage.serviceUsageConsumer"
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:iac-vpcsc-ro@${PROJECT_ID}.iam.gserviceaccount.com" --role="roles/serviceusage.serviceUsageConsumer"
 
+# Enable logging.googleapis.com on the networking projects to prevent Terraform plan failures
+# This resolves the data source chicken-and-egg bug where Terraform tries to read logging settings before the API is enabled
+echo "--------------------------------------------------------"
+echo "Enabling logging.googleapis.com on networking projects..."
+echo "--------------------------------------------------------"
+gcloud services enable logging.googleapis.com --project="placard-prod-net-core-0"
+gcloud services enable logging.googleapis.com --project="placard-prod-net-spoke-0"
+gcloud services enable logging.googleapis.com --project="placard-dev-net-spoke-0"
+
 # Import already existing projects into Terraform state to resolve 409 Already Exists errors
 # This happens because the projects were partially created on Google Cloud before the billing quota errored out,
 # preventing the state from saving. This adopts them cleanly back into the Terraform state.

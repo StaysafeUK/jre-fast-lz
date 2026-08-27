@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Helper script to directly inject missing Service Usage roles for Stage 1 service accounts
+# Bulletproof helper script to inject missing Service Usage roles for Stage 1 service accounts
 
 python3 -c '
 import os
@@ -21,16 +21,31 @@ if not path:
     exit(1)
 
 with open(path, "r") as f:
-    content = f.read()
+    lines = f.readlines()
 
-target = "  $iam_principals:service_accounts/iac-0/iac-security-ro:\n    - roles/serviceusage.serviceUsageConsumer"
-replacement = target + "\n  $iam_principals:service_accounts/iac-0/iac-vpcsc-rw:\n    - roles/serviceusage.serviceUsageConsumer\n  $iam_principals:service_accounts/iac-0/iac-vpcsc-ro:\n    - roles/serviceusage.serviceUsageConsumer"
+# Check if already added
+content_str = "".join(lines)
+if "iac-vpcsc-rw" in content_str:
+    print("SUCCESS: iac-vpcsc-rw is already present in your iac-0.yaml!")
+    exit(0)
 
-if target in content and "iac-vpcsc-rw" not in content:
-    content = content.replace(target, replacement)
+new_lines = []
+inserted = False
+
+for line in lines:
+    new_lines.append(line)
+    if "iam_by_principals:" in line and not inserted:
+        # Get indentation of the next line (or default to 2 spaces)
+        new_lines.append("  $iam_principals:service_accounts/iac-0/iac-vpcsc-rw:\n")
+        new_lines.append("    - roles/serviceusage.serviceUsageConsumer\n")
+        new_lines.append("  $iam_principals:service_accounts/iac-0/iac-vpcsc-ro:\n")
+        new_lines.append("    - roles/serviceusage.serviceUsageConsumer\n")
+        inserted = True
+
+if inserted:
     with open(path, "w") as f:
-        f.write(content)
-    print("SUCCESS: iac-0.yaml has been updated directly at:", path)
+        f.writelines(new_lines)
+    print("SUCCESS: iac-0.yaml was successfully updated directly in your workspace!")
 else:
-    print("WARNING: iac-0.yaml was already updated, or the target pattern was not found.")
+    print("ERROR: Could not find the iam_by_principals: block inside iac-0.yaml.")
 '

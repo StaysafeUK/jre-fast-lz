@@ -23,10 +23,7 @@ export FAST_ROLES="
 # 3. Apply the IAM policy bindings at the organization level
 for role in $FAST_ROLES; do
   echo "Adding role $role to $FAST_PRINCIPAL at organization level..."
-  gcloud organizations add-iam-policy-binding "$FAST_ORG_ID" \
-    --member "$FAST_PRINCIPAL" \
-    --role "$role" \
-    --condition None
+  gcloud organizations add-iam-policy-binding "$FAST_ORG_ID" --member "$FAST_PRINCIPAL" --role "$role" --condition None
 done
 
 # 4. Assign Billing Account Permissions
@@ -38,9 +35,7 @@ done
 # (roles/billing.admin) role bound directly on the billing
 # account:
 echo "Adding billing.admin role on billing account 011375-A0472C-432D72..."
-gcloud billing accounts add-iam-policy-binding "011375-A0472C-432D72" \
-  --member "$FAST_PRINCIPAL" \
-  --role "roles/billing.admin"
+gcloud billing accounts add-iam-policy-binding "011375-A0472C-432D72" --member "$FAST_PRINCIPAL" --role "roles/billing.admin"
 
 # 5. Setup a Quota-Tracking Project (If starting fresh)
 # To prevent failures related to API usage limits/quota tracking
@@ -54,12 +49,4 @@ gcloud config set project intrepid-fiber-506711-j5
 
 # Enable prerequisite APIs in that project
 echo "Enabling prerequisite APIs..."
-gcloud services enable \
-  bigquery.googleapis.com \
-  cloudbilling.googleapis.com \
-  cloudresourcemanager.googleapis.com \
-  essentialcontacts.googleapis.com \
-  iam.googleapis.com \
-  logging.googleapis.com \
-  orgpolicy.googleapis.com \
-  serviceusage.googleapis.com
+gcloud services enable bigquery.googleapis.com cloudbilling.googleapis.com cloudresourcemanager.googleapis.com essentialcontacts.googleapis.com iam.googleapis.com logging.googleapis.com orgpolicy.googleapis.com serviceusage.googleapis.com

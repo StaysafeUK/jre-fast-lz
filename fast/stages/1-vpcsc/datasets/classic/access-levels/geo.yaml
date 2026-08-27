@@ -18,6 +18,6 @@
 # and needs to be edited, or not referenced in the perimeter variable
 conditions:
   - regions:
-      - ES
-      - ID
-      - IT
+      - EU
+      - US
+      

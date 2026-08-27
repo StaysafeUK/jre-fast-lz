@@ -37,11 +37,11 @@ projects:
 context:
   # you can populate context variables here for use in YAML replacements
   email_addresses:
-    gcp-organization-admins: justin.robert.evans@verifyus.co.uk
+    gcp-organization-admins: justin@placard.media
   iam_principals:
     # this is the default group used in bootstrap, initial user must be a member
     # Since the gcp-org-admins group doesn't exist yet, we use your active user to bootstrap
-    gcp-organization-admins: user:justin.robert.evans@verifyus.co.uk
+    gcp-organization-admins: user:justin@placard.media
   locations:
     primary: europe-west2
 output_files:

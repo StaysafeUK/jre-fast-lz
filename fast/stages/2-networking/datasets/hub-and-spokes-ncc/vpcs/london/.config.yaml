@@ -12,11 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# yaml-language-server: $schema=../../../schemas/ncc-hub.schema.json
+# yaml-language-server: $schema=../../../../schemas/vpc.schema.json
 
-name: placard-ncc-hub
 project_id: $project_ids:net-prod-0
-groups:
+name: vpc-spoke-london
+delete_default_routes_on_create: true
+mtu: 1500
+
+nat_config:
+  nat-london:
+    region: $locations:london
+
+ncc_config:
+  hub: $ncc_hubs:placard-ncc-hub
+  group: $ncc_groups:placard-ncc-hub/default
+
+routes:
   default:
-    auto_accept:
-      - $project_ids:net-prod-0
+    dest_range: 0.0.0.0/0
+    next_hop_type: "gateway"
+    next_hop: "default-internet-gateway"

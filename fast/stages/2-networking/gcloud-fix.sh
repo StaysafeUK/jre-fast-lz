@@ -6,6 +6,13 @@
 
 PROJECT_ID="placard-prod-iac-core-0"
 
+echo "Force-setting active gcloud project to: ${PROJECT_ID}..."
+gcloud config set project "${PROJECT_ID}"
+
+# Export environment variables for the current session to override any old session caches
+export GOOGLE_PROJECT="${PROJECT_ID}"
+export GOOGLE_CLOUD_PROJECT="${PROJECT_ID}"
+
 echo "Adding serviceusage consumer role on project: ${PROJECT_ID}..."
 
 # Stage 2 - Networking

@@ -4,8 +4,17 @@
 
 # 1. Define variables based on your placard-lz tfvars
 export FAST_ORG_ID="150829647948"
-export FAST_PRINCIPAL="group:gcp-org-admins@placard.media"
-# Or "user:your-email@placard.media"
+
+# Google Cloud validates that a Group exists in Cloud Identity/Workspace before allowing it to be bound to IAM policies.
+# If you haven't created the 'gcp-org-admins@placard.media' group in admin.google.com yet,
+# we default to using your currently logged-in individual gcloud user account:
+ACTIVE_USER=$(gcloud config get-value account 2>/dev/null)
+export FAST_PRINCIPAL="user:${ACTIVE_USER}"
+
+echo "Using Active Principal: ${FAST_PRINCIPAL}"
+
+# To switch back to using the group once it has been created, uncomment this line:
+# export FAST_PRINCIPAL="group:gcp-org-admins@placard.media"
 
 # 2. Define the required bootstrapping roles
 export FAST_ROLES="

@@ -18,6 +18,5 @@
 # and needs to be edited, or not referenced in the perimeter variable
 conditions:
   - regions:
-      - EU
+      - GB
       - US
-      

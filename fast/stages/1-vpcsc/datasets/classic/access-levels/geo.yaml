@@ -18,5 +18,10 @@
 # and needs to be edited, or not referenced in the perimeter variable
 conditions:
   - regions:
-      - GB
-      - US
+      - GB # United Kingdom (Primary office)
+      - US # United States (Spoke office)
+      - BE # Belgium (europe-west1 - Core Cloud Shell VM location)
+      - DE # Germany (europe-west3 - Ephemeral Cloud Shell location)
+      - NL # Netherlands (europe-west4)
+      - IE # Ireland (europe-west2)
+      - FI # Finland (europe-north1)

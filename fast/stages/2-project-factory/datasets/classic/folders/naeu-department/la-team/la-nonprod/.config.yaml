@@ -1,0 +1,36 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# yaml-language-server: $schema=../../../../../../schemas/folder.schema.json
+
+name: la-nonprod
+parent: $folder_ids:naeu-department/la-team
+
+iam_by_principals:
+  "group:gcp-org-admins@placard.media":
+    - roles/owner
+  "group:gcp-devops@placard.media":
+    - roles/resourcemanager.folderAdmin
+    - roles/resourcemanager.projectCreator
+    - roles/viewer
+  "group:gcp-network-admins@placard.media":
+    - roles/compute.networkAdmin
+    - roles/viewer
+  "group:gcp-security-admins@placard.media":
+    - roles/iam.securityAdmin
+    - roles/resourcemanager.folderViewer
+  "group:gcp-billing-admins@placard.media":
+    - roles/billing.viewer
+  "group:gcp-mediacreators-users@placard.media":
+    - roles/viewer

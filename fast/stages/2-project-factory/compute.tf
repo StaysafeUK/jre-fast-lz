@@ -32,7 +32,7 @@ resource "google_compute_instance" "debian_micro" {
   }
 
   network_interface {
-    subnetwork = var.subnet_self_links["vpc-spoke-london/subnet-london"]
+    subnetwork = var.subnet_self_links["vpc-spoke-london"]["subnet-london"]
     # Outbound internet is securely provided via local Cloud NAT (no public IP needed!)
   }
 

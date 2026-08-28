@@ -28,5 +28,5 @@ services:
 shared_vpc_service_config:
   host_project: $project_ids:net-prod-0
   network_users:
-    - group:gcp-devops@placard.media
+    - $iam_principals:gcp-devops
     - user:justin@placard.media

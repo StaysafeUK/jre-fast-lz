@@ -32,9 +32,14 @@ if [ -f "$FOUND_DIR/2-networking.auto.tfvars.json" ]; then
   echo "✔ Linked 2-networking.auto.tfvars.json (Networking)"
 fi
 
-if [ -f "$FOUND_DIR/2-project-factory.auto.tfvars.json" ]; then
-  ln -s "$FOUND_DIR/2-project-factory.auto.tfvars.json" ./
-  echo "✔ Linked 2-project-factory.auto.tfvars.json (Project Factory)"
-fi
+# Automatically generate 3-workloads.auto.tfvars to define our project ID mapping
+# This resolves variable collisions and ensures the newly created project ID is correctly registered!
+echo "Generating 3-workloads.auto.tfvars..."
+cat << 'EOF' > 3-workloads.auto.tfvars
+project_ids = {
+  lon-dev-project-0 = "placard-dev-lon-dev-0"
+}
+EOF
+echo "✔ Created 3-workloads.auto.tfvars with project_ids mapping"
 
-echo "Done! Stage 3 Workload links successfully created."
+echo "Done! Stage 3 Workload links and variables successfully created."

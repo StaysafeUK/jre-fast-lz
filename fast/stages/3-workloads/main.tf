@@ -37,8 +37,8 @@ resource "google_compute_instance" "debian_micro" {
   }
 
   network_interface {
-    # Keyed by filesystem VPC key "london", not GCP name "vpc-spoke-london"
-    subnetwork = var.subnet_self_links["london"]["subnet-london"]
+    # Keyed by filesystem VPC key "london" and regional subnet name "europe-west2/subnet-london"
+    subnetwork = var.subnet_self_links["london"]["europe-west2/subnet-london"]
     # No public IP is assigned! It routes outbound internet traffic securely
     # through the VPC to your London Cloud NAT gateway.
   }

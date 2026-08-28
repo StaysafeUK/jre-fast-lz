@@ -25,8 +25,8 @@ provider "google" {
 resource "google_compute_instance" "debian_micro" {
   project      = var.project_ids["lon-dev-project-0"]
   name         = "lon-dev-debian-micro"
-  machine_type = "e2-micro"        # Smallest, free-tier eligible instance
-  zone         = "europe-west2-a"  # London, UK zone
+  machine_type = "e2-micro"       # Smallest, free-tier eligible instance
+  zone         = "europe-west2-a" # London, UK zone
 
   boot_disk {
     initialize_params {
@@ -37,7 +37,8 @@ resource "google_compute_instance" "debian_micro" {
   }
 
   network_interface {
-    subnetwork = var.subnet_self_links["vpc-spoke-london"]["subnet-london"]
+    # Keyed by filesystem VPC key "london", not GCP name "vpc-spoke-london"
+    subnetwork = var.subnet_self_links["london"]["subnet-london"]
     # No public IP is assigned! It routes outbound internet traffic securely
     # through the VPC to your London Cloud NAT gateway.
   }

@@ -32,4 +32,9 @@ if [ -f "$FOUND_DIR/2-networking.auto.tfvars.json" ]; then
   echo "✔ Linked 2-networking.auto.tfvars.json (Networking)"
 fi
 
+if [ -f "$FOUND_DIR/2-project-factory.auto.tfvars.json" ]; then
+  ln -s "$FOUND_DIR/2-project-factory.auto.tfvars.json" ./
+  echo "✔ Linked 2-project-factory.auto.tfvars.json (Project Factory)"
+fi
+
 echo "Done! Stage 3 Workload links successfully created."

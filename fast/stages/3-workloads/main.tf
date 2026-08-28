@@ -14,36 +14,46 @@
  * limitations under the License.
  */
 
-# Natively provision a Debian micro VM instance inside your new 'lon-dev-project-0' project
-# and connect it securely to your London VPC spoke.
+# Natively provision scalable compute instances and GCS buckets inside your workload projects
+# and connect them securely to your Shared VPC spokes.
 
 provider "google" {
   # Runs under your active, highly-privileged gcloud CLI user (justin@placard.media),
   # bypassing any complicated platform service-account impersonation!
 }
 
+# 1. Scalable Compute Instance Factory
 resource "google_compute_instance" "debian_micro" {
-  project      = var.project_ids["lon-dev-project-0"]
-  name         = "lon-dev-debian-micro"
-  machine_type = "e2-micro"       # Smallest, free-tier eligible instance
-  zone         = "europe-west2-a" # London, UK zone
+  for_each     = var.compute_instances
+  project      = var.project_ids[each.value.project_key]
+  name         = each.key
+  machine_type = each.value.machine_type
+  zone         = each.value.zone
 
   boot_disk {
     initialize_params {
-      image = "projects/debian-cloud/global/images/family/debian-12"
-      type  = "pd-standard"
-      size  = 10
+      image = each.value.image
+      type  = each.value.type
+      size  = each.value.size
     }
   }
 
   network_interface {
-    # Keyed by filesystem VPC key "london" and regional subnet name "europe-west2/subnet-london"
-    subnetwork = var.subnet_self_links["london"]["europe-west2/subnet-london"]
+    subnetwork = var.subnet_self_links[each.value.vpc_key][each.value.subnet_key]
     # No public IP is assigned! It routes outbound internet traffic securely
-    # through the VPC to your London Cloud NAT gateway.
+    # through the VPC to your regional Cloud NAT gateway.
   }
 
-  metadata = {
-    enable-oslogin = "TRUE"
-  }
+  metadata = each.value.metadata
+}
+
+# 2. Scalable Cloud Storage Bucket Factory
+resource "google_storage_bucket" "buckets" {
+  for_each                    = var.gcs_buckets
+  project                     = var.project_ids[each.value.project_key]
+  name                        = each.key
+  location                    = each.value.location
+  storage_class               = each.value.class
+  uniform_bucket_level_access = true
+  force_destroy               = false
 }

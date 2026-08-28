@@ -25,3 +25,41 @@ variable "subnet_self_links" {
   type        = map(map(string))
   default     = {}
 }
+
+# -----------------------------------------------------------------------------
+# Workload Factories
+# -----------------------------------------------------------------------------
+
+variable "compute_instances" {
+  description = "Map of compute instances to create, keyed by unique VM name."
+  type = map(object({
+    project_key  = string # e.g., "lon-dev-project-0"
+    machine_type = optional(string, "e2-micro")
+    zone         = string # e.g., "europe-west2-a"
+    image        = optional(string, "projects/debian-cloud/global/images/family/debian-12")
+    vpc_key      = string # e.g., "london", "new-york", "los-angeles"
+    subnet_key   = string # e.g., "europe-west2/subnet-london"
+    size         = optional(number, 10)
+    type         = optional(string, "pd-standard")
+    metadata     = optional(map(string), { enable-oslogin = "TRUE" })
+  }))
+  default = {
+    "lon-dev-debian-micro" = {
+      project_key  = "lon-dev-project-0"
+      machine_type = "e2-micro"
+      zone         = "europe-west2-a"
+      vpc_key      = "london"
+      subnet_key   = "europe-west2/subnet-london"
+    }
+  }
+}
+
+variable "gcs_buckets" {
+  description = "Map of Cloud Storage buckets to create, keyed by unique bucket name."
+  type = map(object({
+    project_key = string # e.g., "lon-dev-project-0"
+    location    = optional(string, "europe-west2")
+    class       = optional(string, "STANDARD")
+  }))
+  default = {}
+}

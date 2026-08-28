@@ -42,4 +42,22 @@ if [ -f "$FOUND_DIR/0-org-setup.auto.tfvars.json" ]; then
   echo "✔ Linked 0-org-setup.auto.tfvars.json"
 fi
 
-echo "Done! Stage 3 SecOps links successfully created."
+# Automatically generate the variable file with correct, safe HCL formatting
+# This completely avoids terminal copy-paste backslash escaping and comment wrapping bugs.
+echo "Writing 3-secops-dev.auto.tfvars..."
+cat << 'EOF' > 3-secops-dev.auto.tfvars
+# -----------------------------------------------------------------------------
+# Stage 3 SecOps (Dev) Configuration
+# -----------------------------------------------------------------------------
+
+tenant_config = {
+  customer_id = "00000000-0000-0000-0000-000000000000"
+  region      = "europe"
+}
+
+# Places the SecOps project inside the central 'Security' folder created in Stage 0
+parent_folder = "$folder_ids:security"
+EOF
+echo "✔ Created 3-secops-dev.auto.tfvars"
+
+echo "Done! Stage 3 SecOps links and variables successfully created."

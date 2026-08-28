@@ -59,8 +59,9 @@ echo "Checking if we need to import existing projects into Terraform state..."
 echo "--------------------------------------------------------"
 
 # Run import commands (using || true so the script continues if a project doesn't exist yet)
+# Note: The project ID for 'net-prod-0' is 'placard-prod-net-spoke-0' (not 'placard-prod-net-prod-0')
 terraform import 'module.projects.module.projects["net-core-0"].google_project.project[0]' placard-prod-net-core-0 || true
 terraform import 'module.projects.module.projects["net-dev-0"].google_project.project[0]' placard-dev-net-spoke-0 || true
-terraform import 'module.projects.module.projects["net-prod-0"].google_project.project[0]' placard-prod-net-prod-0 || true
+terraform import 'module.projects.module.projects["net-prod-0"].google_project.project[0]' placard-prod-net-spoke-0 || true
 
 echo "Done! All configurations and imports successfully handled."

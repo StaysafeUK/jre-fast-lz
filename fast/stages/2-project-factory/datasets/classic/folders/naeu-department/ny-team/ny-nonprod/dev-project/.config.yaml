@@ -9,6 +9,18 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the_org_setup
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the_org_setup
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -18,19 +30,19 @@ name: dev-project
 parent: $folder_ids:naeu-department/ny-team/ny-nonprod
 
 iam_by_principals:
-  "group:gcp-org-admins@placard.media":
+  $iam_principals:gcp-organization-admins:
     - roles/owner
-  "group:gcp-devops@placard.media":
+  $iam_principals:gcp-devops:
     - roles/resourcemanager.folderAdmin
     - roles/resourcemanager.projectCreator
     - roles/viewer
-  "group:gcp-network-admins@placard.media":
+  $iam_principals:gcp-network-admins:
     - roles/compute.networkAdmin
     - roles/viewer
-  "group:gcp-security-admins@placard.media":
+  $iam_principals:gcp-security-admins:
     - roles/iam.securityAdmin
     - roles/resourcemanager.folderViewer
-  "group:gcp-billing-admins@placard.media":
-    - roles/billing.viewer
-  "group:gcp-mediacreators-users@placard.media":
+  $iam_principals:gcp-billing-admins:
+    - roles/viewer
+  $iam_principals:gcp-mediacreators-users:
     - roles/viewer

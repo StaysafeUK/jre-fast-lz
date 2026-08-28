@@ -18,19 +18,19 @@ name: la-team
 parent: $folder_ids:naeu-department
 
 iam_by_principals:
-  "group:gcp-org-admins@placard.media":
+  $iam_principals:gcp-organization-admins:
     - roles/owner
-  "group:gcp-devops@placard.media":
+  $iam_principals:gcp-devops:
     - roles/resourcemanager.folderAdmin
     - roles/resourcemanager.projectCreator
     - roles/viewer
-  "group:gcp-network-admins@placard.media":
+  $iam_principals:gcp-network-admins:
     - roles/compute.networkAdmin
     - roles/viewer
-  "group:gcp-security-admins@placard.media":
+  $iam_principals:gcp-security-admins:
     - roles/iam.securityAdmin
     - roles/resourcemanager.folderViewer
-  "group:gcp-billing-admins@placard.media":
-    - roles/billing.viewer
-  "group:gcp-mediacreators-users@placard.media":
+  $iam_principals:gcp-billing-admins:
+    - roles/viewer
+  $iam_principals:gcp-mediacreators-users:
     - roles/viewer

@@ -22,7 +22,10 @@ ingress:
     source_ranges:
       - $cidr_ranges_sets:iap_forwarders
     rules:
-      - tcp: [22, 3389]
+      - protocol: tcp
+        ports:
+          - 22
+          - 3389
 
   # Default Deny/Logging rule
   deny-unmatched-ingress:

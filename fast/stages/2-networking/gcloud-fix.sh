@@ -48,6 +48,13 @@ gcloud services enable logging.googleapis.com --project="placard-dev-net-spoke-0
 # This happens because the projects were partially created on Google Cloud before the billing quota errored out,
 # preventing the state from saving. This adopts them cleanly back into the Terraform state.
 echo "--------------------------------------------------------"
+echo "Cleaning existing project records from state..."
+echo "--------------------------------------------------------"
+terraform state rm 'module.projects.module.projects["net-core-0"].google_project.project[0]' || true
+terraform state rm 'module.projects.module.projects["net-dev-0"].google_project.project[0]' || true
+terraform state rm 'module.projects.module.projects["net-prod-0"].google_project.project[0]' || true
+
+echo "--------------------------------------------------------"
 echo "Checking if we need to import existing projects into Terraform state..."
 echo "--------------------------------------------------------"
 

@@ -16,7 +16,7 @@
 
 ingress:
   # Allow Secure Admin Access (SSH and RDP) from Google IAP Proxy
-  allow-iap-admin-access:
+  allow-iap-admin-access-losangeles:
     description: "Allow SSH (TCP 22) and RDP (TCP 3389) ingress from Identity-Aware Proxy."
     priority: 1000
     source_ranges:
@@ -28,7 +28,7 @@ ingress:
           - 3389
 
   # Default Deny/Logging rule
-  deny-unmatched-ingress:
+  deny-unmatched-ingress-losangeles:
     description: "Deny and log any unmatched ingress traffic."
     deny: true
     priority: 65535

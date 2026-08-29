@@ -42,6 +42,7 @@ variable "compute_instances" {
     size         = optional(number, 10)
     type         = optional(string, "pd-standard")
     metadata     = optional(map(string), { enable-oslogin = "TRUE" })
+    labels       = optional(map(string), {}) # Custom labels for billing and cost queries
   }))
   default = {
     "lon-dev-debian-micro" = {
@@ -50,6 +51,11 @@ variable "compute_instances" {
       zone         = "europe-west2-a"
       vpc_key      = "london"
       subnet_key   = "europe-west2/subnet-london"
+      labels = {
+        environment = "dev"
+        team        = "naeu-london"
+        billing     = "placard-media"
+      }
     }
   }
 }
@@ -60,6 +66,7 @@ variable "gcs_buckets" {
     project_key = string # e.g., "lon-dev-project-0"
     location    = optional(string, "europe-west2")
     class       = optional(string, "STANDARD")
+    labels      = optional(map(string), {}) # Custom labels for billing and cost queries
   }))
   default = {}
 }

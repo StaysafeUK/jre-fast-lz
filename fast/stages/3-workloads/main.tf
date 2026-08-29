@@ -45,6 +45,7 @@ resource "google_compute_instance" "debian_micro" {
   }
 
   metadata = each.value.metadata
+  labels   = each.value.labels
 }
 
 # 2. Scalable Cloud Storage Bucket Factory
@@ -56,4 +57,5 @@ resource "google_storage_bucket" "buckets" {
   storage_class               = each.value.class
   uniform_bucket_level_access = true
   force_destroy               = false
+  labels                      = each.value.labels
 }

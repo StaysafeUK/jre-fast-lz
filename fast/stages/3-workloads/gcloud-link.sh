@@ -33,7 +33,7 @@ if [ -f "$FOUND_DIR/2-networking.auto.tfvars.json" ]; then
 fi
 
 # Automatically generate 3-workloads.auto.tfvars to define our project ID mapping and Workload Factories
-# This provides you with a ready-to-run template containing London, NY, LA VMs, and GCS Bucket resources.
+# This provides you with a ready-to-run template containing London, NY, LA VMs, and GCS Bucket resources with custom billing labels.
 echo "Generating 3-workloads.auto.tfvars..."
 cat << 'EOF' > 3-workloads.auto.tfvars
 # -----------------------------------------------------------------------------
@@ -47,13 +47,18 @@ project_ids = {
 
 # 2. Map-driven VM Factory (Add as many VMs as you want here!)
 compute_instances = {
-  # Your existing London VM
+  # Your existing London VM with billing labels
   "lon-dev-debian-micro" = {
     project_key  = "lon-dev-project-0"
     machine_type = "e2-micro"
     zone         = "europe-west2-a" # London, UK
     vpc_key      = "london"
     subnet_key   = "europe-west2/subnet-london"
+    labels = {
+      environment = "dev"
+      team        = "naeu-london"
+      billing     = "placard-media"
+    }
   }
 
   # EXAMPLE: Adding a New York Spoke VM!
@@ -63,6 +68,11 @@ compute_instances = {
     zone         = "us-east1-b"     # New York / us-east1
     vpc_key      = "new-york"
     subnet_key   = "us-east1/subnet-newyork"
+    labels = {
+      environment = "dev"
+      team        = "naeu-newyork"
+      billing     = "placard-media"
+    }
   }
 
   # EXAMPLE: Adding a Los Angeles Spoke VM!
@@ -72,6 +82,11 @@ compute_instances = {
     zone         = "us-west2-a"     # Los Angeles / us-west2
     vpc_key      = "los-angeles"
     subnet_key   = "us-west2/subnet-losangeles"
+    labels = {
+      environment = "dev"
+      team        = "naeu-losangeles"
+      billing     = "placard-media"
+    }
   }
 }
 
@@ -81,9 +96,14 @@ gcs_buckets = {
     project_key = "lon-dev-project-0"
     location    = "europe-west2"    # London GCS region
     class       = "STANDARD"
+    labels = {
+      environment = "dev"
+      team        = "naeu-london"
+      billing     = "placard-media"
+    }
   }
 }
 EOF
-echo "✔ Created 3-workloads.auto.tfvars with project_ids and factories mapping"
+echo "✔ Created 3-workloads.auto.tfvars with project_ids and factories mapping containing billing labels"
 
 echo "Done! Stage 3 Workload links and variables successfully created."

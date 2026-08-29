@@ -43,11 +43,13 @@ cat << 'EOF' > 3-workloads.auto.tfvars
 # 1. Project mapping (from previous steps)
 project_ids = {
   lon-dev-project-0 = "placard-lon-dev-project-0"
+  ny-dev-project-0  = "placard-ny-dev-project-0"
+  la-dev-project-0  = "placard-la-dev-project-0"
 }
 
 # 2. Map-driven VM Factory (Add as many VMs as you want here!)
 compute_instances = {
-  # Your existing London VM with billing labels
+  # Your London VM with billing labels
   "lon-dev-debian-micro" = {
     project_key  = "lon-dev-project-0"
     machine_type = "e2-micro"
@@ -61,9 +63,9 @@ compute_instances = {
     }
   }
 
-  # EXAMPLE: Adding a New York Spoke VM!
+  # Your New York Spoke VM! (Deploys in its own dedicated NY project)
   "ny-dev-debian-micro" = {
-    project_key  = "lon-dev-project-0"
+    project_key  = "ny-dev-project-0"
     machine_type = "e2-micro"
     zone         = "us-east1-b"     # New York / us-east1
     vpc_key      = "new-york"
@@ -75,9 +77,9 @@ compute_instances = {
     }
   }
 
-  # EXAMPLE: Adding a Los Angeles Spoke VM!
+  # Your Los Angeles Spoke VM! (Deploys in its own dedicated LA project)
   "la-dev-debian-micro" = {
-    project_key  = "lon-dev-project-0"
+    project_key  = "la-dev-project-0"
     machine_type = "e2-micro"
     zone         = "us-west2-a"     # Los Angeles / us-west2
     vpc_key      = "los-angeles"

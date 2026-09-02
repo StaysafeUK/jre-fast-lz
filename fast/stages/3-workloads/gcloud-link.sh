@@ -64,15 +64,15 @@ compute_instances = {
     }
   }
 
-  # Your London Windows Server Core VM with billing labels
-  # Note: Windows Server requires slightly more resources than Linux to run comfortably.
-  # We use e2-medium (2 vCPUs, 4GB RAM) as the cost-efficient minimum, running Server Core
-  # with a 50GB boot disk.
+  # Your London Windows Server GUI VM with billing labels
+  # Note: This is Windows Server 2022 with Desktop Experience (GUI) to enable standard
+  # visual Remote Desktop (RDP) sessions. We use e2-medium (2 vCPUs, 4GB RAM) as the 
+  # cost-efficient minimum to run the GUI comfortably with a 50GB boot disk.
   "lon-dev-windows-micro" = {
     project_key  = "lon-dev-project-0"
     machine_type = "e2-medium"       # Minimum comfortable instance size for Windows
     zone         = "europe-west2-a"  # London, UK
-    image        = "projects/windows-cloud/global/images/family/windows-2022-core" # Ultra-lightweight Server Core OS (no GUI)
+    image        = "projects/windows-cloud/global/images/family/windows-2022" # Standard Server 2022 with Desktop Experience (GUI)
     vpc_key      = "london"
     subnet_key   = "europe-west2/subnet-london"
     size         = 50               # Recommended minimum Windows boot disk size

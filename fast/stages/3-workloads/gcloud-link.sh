@@ -33,7 +33,7 @@ if [ -f "$FOUND_DIR/2-networking.auto.tfvars.json" ]; then
 fi
 
 # Automatically generate 3-workloads.auto.tfvars to define our project ID mapping and Workload Factories
-# This provides you with a ready-to-run template containing London Linux/Windows VMs, NY/LA VMs, and GCS Bucket resources with custom billing labels.
+# This provides you with a ready-to-run template containing your London Windows VM, NY/LA templates, and GCS Bucket resources.
 echo "Generating 3-workloads.auto.tfvars..."
 cat << 'EOF' > 3-workloads.auto.tfvars
 # -----------------------------------------------------------------------------
@@ -49,21 +49,6 @@ project_ids = {
 
 # 2. Map-driven VM Factory (Add as many VMs as you want here!)
 compute_instances = {
-  # Your London Debian Linux VM with billing labels
-  "lon-dev-debian-micro" = {
-    project_key  = "lon-dev-project-0"
-    machine_type = "e2-micro"
-    zone         = "europe-west2-a" # London, UK
-    vpc_key      = "london"
-    subnet_key   = "europe-west2/subnet-london"
-    labels = {
-      environment = "dev"
-      team        = "naeu-london"
-      billing     = "placard-media"
-      os          = "linux"
-    }
-  }
-
   # Your London Windows Server GUI VM with billing labels
   # Note: This is Windows Server 2022 with Desktop Experience (GUI) to enable standard
   # visual Remote Desktop (RDP) sessions. We use e2-medium (2 vCPUs, 4GB RAM) as the 
@@ -84,7 +69,7 @@ compute_instances = {
     }
   }
 
-  # Your New York Spoke VM! (Deploys in its own dedicated NY project)
+  # EXAMPLE: Adding a New York Spoke VM! (Deploys in its own dedicated NY project)
   "ny-dev-debian-micro" = {
     project_key  = "ny-dev-project-0"
     machine_type = "e2-micro"
@@ -99,7 +84,7 @@ compute_instances = {
     }
   }
 
-  # Your Los Angeles Spoke VM! (Deploys in its own dedicated LA project)
+  # EXAMPLE: Adding a Los Angeles Spoke VM! (Deploys in its own dedicated LA project)
   "la-dev-debian-micro" = {
     project_key  = "la-dev-project-0"
     machine_type = "e2-micro"

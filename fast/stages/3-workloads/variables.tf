@@ -33,37 +33,38 @@ variable "subnet_self_links" {
 variable "compute_instances" {
   description = "Map of compute instances to create, keyed by unique VM name."
   type = map(object({
-    project_key  = string # e.g., "lon-dev-project-0"
+    project_key  = string                  # e.g., "lon-dev-project-0"
     machine_type = optional(string, "e2-micro")
-    zone         = string # e.g., "europe-west2-a"
+    zone         = string                  # e.g., "europe-west2-a"
     image        = optional(string, "projects/debian-cloud/global/images/family/debian-12")
-    vpc_key      = string # e.g., "london", "new-york", "los-angeles"
-    subnet_key   = string # e.g., "europe-west2/subnet-london"
+    vpc_key      = string                  # e.g., "london", "new-york", "los-angeles"
+    subnet_key   = string                  # e.g., "europe-west2/subnet-london"
     size         = optional(number, 10)
     type         = optional(string, "pd-standard")
     metadata     = optional(map(string), { enable-oslogin = "TRUE" })
     labels       = optional(map(string), {}) # Custom labels for billing and cost queries
   }))
-  default = {
-    "lon-dev-debian-micro" = {
-      project_key  = "lon-dev-project-0"
-      machine_type = "e2-micro"
-      zone         = "europe-west2-a"
-      vpc_key      = "london"
-      subnet_key   = "europe-west2/subnet-london"
-      labels = {
-        environment = "dev"
-        team        = "naeu-london"
-        billing     = "placard-media"
-      }
-    }
+  default = {} # Clear default so no VMs are created unless explicitly declared in .tfvars!
+
+  # -----------------------------------------------------------------------------
+  # Allowed Images Validation Guardrail (The pre-approved array)
+  # -----------------------------------------------------------------------------
+  validation {
+    condition = alltrue([
+      for vm in var.compute_instances :
+      contains([
+        "projects/debian-cloud/global/images/family/debian-12",
+        "projects/windows-cloud/global/images/family/windows-2022"
+      ], coalesce(vm.image, "projects/debian-cloud/global/images/family/debian-12"))
+    ])
+    error_message = "ERROR: Allowed images are restricted to:\n  - 'projects/debian-cloud/global/images/family/debian-12'\n  - 'projects/windows-cloud/global/images/family/windows-2022'"
   }
 }
 
 variable "gcs_buckets" {
   description = "Map of Cloud Storage buckets to create, keyed by unique bucket name."
   type = map(object({
-    project_key = string # e.g., "lon-dev-project-0"
+    project_key = string                   # e.g., "lon-dev-project-0"
     location    = optional(string, "europe-west2")
     class       = optional(string, "STANDARD")
     labels      = optional(map(string), {}) # Custom labels for billing and cost queries

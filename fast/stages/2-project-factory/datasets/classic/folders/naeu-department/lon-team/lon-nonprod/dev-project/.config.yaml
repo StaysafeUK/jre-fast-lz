@@ -41,3 +41,10 @@ iam_by_principals:
     - roles/viewer
   $iam_principals:gcp-mediacreators-users:
     - roles/viewer
+
+  # Bind your new London developers group key to the GCE/IAP access roles
+  # This propagates the permissions from the folder level down to the child project!
+  "$iam_principals:gcp-lon-dev-vmadmins":
+    - roles/compute.instanceAdmin.v1
+    - roles/compute.osLogin
+    - roles/iap.tunnelResourceAccessor

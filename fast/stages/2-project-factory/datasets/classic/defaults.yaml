@@ -44,5 +44,6 @@ context:
     gcp-organization-admins: user:justin@placard.media
     gcp-mediacreators-users: user:justin@placard.media
     gcp-lon-dev-admins: user:justin@placard.media
+    gcp-lon-dev-vmadmins: user:justin@placard.media
   locations:
     primary: europe-west2

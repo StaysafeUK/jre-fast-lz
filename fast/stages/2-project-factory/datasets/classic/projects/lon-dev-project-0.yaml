@@ -38,7 +38,7 @@ shared_vpc_service_config:
 iam:
   # Bind your new New York developers group key to the GCE/IAP access roles
   # Fixed Syntax Error: Keys containing a colon (:) must be wrapped in double quotes.
-  "$iam_principals:gcp-lon-dev-admins":
+  "$iam_principals:gcp-lon-dev-vmadmins":
     - roles/compute.instanceAdmin.v1
     - roles/compute.osLogin
     - roles/iap.tunnelResourceAccessor

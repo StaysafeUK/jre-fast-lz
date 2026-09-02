@@ -25,9 +25,9 @@ services:
   - monitoring.googleapis.com
 
 # Connect this project as a Service Project to your Shared VPC host project (net-prod-0)
-# Uses context-interpolated keys to resolve groups to your active user until Workspace groups are created.
+# Note: The network_users list does not support context-interpolation in the project module,
+# so we declare your active user account directly to authorize the Shared VPC network connection.
 shared_vpc_service_config:
   host_project: $project_ids:net-prod-0
   network_users:
-    - $iam_principals:gcp-devops
-    - $iam_principals:gcp-organization-admins
+    - user:justin@placard.media

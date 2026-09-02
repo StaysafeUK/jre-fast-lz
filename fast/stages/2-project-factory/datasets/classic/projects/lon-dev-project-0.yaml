@@ -35,10 +35,12 @@ shared_vpc_service_config:
 # Project-Level IAM Permissions
 #
 #----------------------------------------------------------------------------
-# Principal-based mappings declared under iam_by_principals (conforms to schema)
+# Note: Custom context variables defined in Stage 2 defaults.yaml are not automatically
+# mapped inside project-level IAM bindings. We declare your active user directly to bypass
+# both context-lookup and Workspace group-existence blocks cleanly!
 iam_by_principals:
-  # Bind your new London developers group key to the GCE/IAP access roles
-  "$iam_principals:gcp-lon-dev-vmadmins":
+  # Bind your active corporate user directly to the GCE/IAP access roles
+  "user:justin@placard.media":
     - roles/compute.instanceAdmin.v1
     - roles/compute.osLogin
     - roles/iap.tunnelResourceAccessor

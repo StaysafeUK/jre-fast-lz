@@ -134,11 +134,4 @@ module "factory" {
   }
 }
 
-resource "terraform_data" "debug_dump" {
-  lifecycle {
-    precondition {
-      condition     = local.context.iam_principals == null
-      error_message = yamlencode(local.context.iam_principals)
-    }
-  }
-}
+

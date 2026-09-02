@@ -33,7 +33,7 @@ if [ -f "$FOUND_DIR/2-networking.auto.tfvars.json" ]; then
 fi
 
 # Automatically generate 3-workloads.auto.tfvars to define our project ID mapping and Workload Factories
-# This provides you with a ready-to-run template containing London, NY, LA VMs, and GCS Bucket resources with custom billing labels.
+# This provides you with a ready-to-run template containing London Linux/Windows VMs, NY/LA VMs, and GCS Bucket resources with custom billing labels.
 echo "Generating 3-workloads.auto.tfvars..."
 cat << 'EOF' > 3-workloads.auto.tfvars
 # -----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ project_ids = {
 
 # 2. Map-driven VM Factory (Add as many VMs as you want here!)
 compute_instances = {
-  # Your London VM with billing labels
+  # Your London Debian Linux VM with billing labels
   "lon-dev-debian-micro" = {
     project_key  = "lon-dev-project-0"
     machine_type = "e2-micro"
@@ -60,6 +60,27 @@ compute_instances = {
       environment = "dev"
       team        = "naeu-london"
       billing     = "placard-media"
+      os          = "linux"
+    }
+  }
+
+  # Your London Windows Server Core VM with billing labels
+  # Note: Windows Server requires slightly more resources than Linux to run comfortably.
+  # We use e2-medium (2 vCPUs, 4GB RAM) as the cost-efficient minimum, running Server Core
+  # with a 50GB boot disk.
+  "lon-dev-windows-micro" = {
+    project_key  = "lon-dev-project-0"
+    machine_type = "e2-medium"       # Minimum comfortable instance size for Windows
+    zone         = "europe-west2-a"  # London, UK
+    image        = "projects/windows-cloud/global/images/family/windows-2022-core" # Ultra-lightweight Server Core OS (no GUI)
+    vpc_key      = "london"
+    subnet_key   = "europe-west2/subnet-london"
+    size         = 50               # Recommended minimum Windows boot disk size
+    labels = {
+      environment = "dev"
+      team        = "naeu-london"
+      billing     = "placard-media"
+      os          = "windows"
     }
   }
 
@@ -74,6 +95,7 @@ compute_instances = {
       environment = "dev"
       team        = "naeu-newyork"
       billing     = "placard-media"
+      os          = "linux"
     }
   }
 
@@ -88,6 +110,7 @@ compute_instances = {
       environment = "dev"
       team        = "naeu-losangeles"
       billing     = "placard-media"
+      os          = "linux"
     }
   }
 }

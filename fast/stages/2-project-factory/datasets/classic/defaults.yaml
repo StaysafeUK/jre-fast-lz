@@ -44,7 +44,8 @@ context:
     gcp-organization-admins: user:justin@placard.media
     gcp-mediacreators-users: user:justin@placard.media
     gcp-lon-dev-admins: user:justin@placard.media
-    # Mapped directly to Tessa's real active corporate account to bypass group/email aliases!
-    gcp-lon-dev-vmadmins: user:tessa@placard.media
+    # Mapped directly and exclusively to the Google Workspace group and everyone who belongs to it!
+    # No user-level bypasses or hardcoded addresses are defined for Tessa.
+    gcp-lon-dev-vmadmins: group:gcp-lon-dev-vmadmins@placard.media
   locations:
     primary: europe-west2

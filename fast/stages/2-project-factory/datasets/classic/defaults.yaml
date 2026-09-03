@@ -33,7 +33,7 @@ projects:
 # environment-specific static contexts can be defined here
 
 context:
-  # Temporarily override non-existent groups to point to your active user account.
+  # Temporarily override non-existent groups to point to your active user accounts.
   # Once your Workspace administrator has created the Google Groups, you can comment out
   # these overrides to seamlessly transition the permissions back to the groups.
   iam_principals:
@@ -44,6 +44,7 @@ context:
     gcp-organization-admins: user:justin@placard.media
     gcp-mediacreators-users: user:justin@placard.media
     gcp-lon-dev-admins: user:justin@placard.media
-    gcp-lon-dev-vmadmins: user:justin@placard.media
+    # Mapped directly to the Google Workspace group and everyone who belongs to it!
+    gcp-lon-dev-vmadmins: group:gcp-lon-dev-vmadmins@placard.media
   locations:
     primary: europe-west2

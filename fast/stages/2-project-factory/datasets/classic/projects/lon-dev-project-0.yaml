@@ -45,9 +45,10 @@ custom_roles:
 #----------------------------------------------------------------------------
 # Principal-based mappings declared under iam_by_principals (conforms to schema)
 iam_by_principals:
-  # Bind your active corporate user directly to the GCE/IAP access roles
-  # and associate the custom 'lon_dev_vm_viewer' role!
-  "user:justin@placard.media":
+  # Bind your London developers group context key to the GCE/IAP access roles
+  # This resolves dynamically to Tessa Bloggs (user:tessa.bloggs@placard.media)
+  # via the Stage 2 context-merging logic!
+  "$iam_principals:gcp-lon-dev-vmadmins":
     - roles/compute.instanceAdmin.v1
     - roles/compute.osLogin
     - roles/iap.tunnelResourceAccessor

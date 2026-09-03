@@ -42,9 +42,11 @@ iam_by_principals:
   $iam_principals:gcp-mediacreators-users:
     - roles/viewer
 
-  # Bind your active corporate user directly to the GCE/IAP access roles
-  # This propagates the permissions cleanly from the folder level down to the child project!
+  # Bind your active corporate user directly to the GCE/IAP access roles at the Folder level!
+  # Added: roles/compute.viewer (contains the compute.instances.get permission) to propagate
+  # the VM retrieval permission down to the placard-lon-dev-project-0 project!
   "user:justin@placard.media":
     - roles/compute.instanceAdmin.v1
     - roles/compute.osLogin
     - roles/iap.tunnelResourceAccessor
+    - roles/compute.viewer

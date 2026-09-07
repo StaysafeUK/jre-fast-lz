@@ -32,6 +32,7 @@ context:
     london: europe-west2
     new-york: us-east1
     los-angeles: us-west2
+    berlin: europe-west3
   iam_principals: {}
 projects:
   defaults:

@@ -21,3 +21,4 @@ peering:
   client_networks:
     - $networks:new-york
     - $networks:los-angeles
+    - $networks:berlin

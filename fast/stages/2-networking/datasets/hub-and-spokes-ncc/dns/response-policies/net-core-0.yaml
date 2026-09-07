@@ -19,6 +19,7 @@ networks:
   - $networks:london
   - $networks:new-york
   - $networks:los-angeles
+  - $networks:berlin
 rules:
   accounts:
     dns_name: "accounts.google.com."

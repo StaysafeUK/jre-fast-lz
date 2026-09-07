@@ -24,3 +24,4 @@ forwarding:
     - $networks:london
     - $networks:new-york
     - $networks:los-angeles
+    - $networks:berlin

@@ -24,10 +24,10 @@ services:
   - logging.googleapis.com
   - monitoring.googleapis.com
 
-# Connect this project as a Service Project to your Shared VPC host project (net-prod-0)
+# Connect this project as a Service Project to your Shared VPC host project (net-dev-0)
 # Note: The network_users list does not support context-interpolation in the project module,
 # so we declare your active user account directly to authorize the Shared VPC network connection.
 shared_vpc_service_config:
-  host_project: $project_ids:net-prod-0
+  host_project: $project_ids:net-dev-0
   network_users:
     - user:justin@placard.media

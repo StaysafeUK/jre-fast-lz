@@ -41,6 +41,7 @@ context:
   iam_principals:
     # this is the default group used in bootstrap, initial user must be a member
     # Since the gcp-org-admins group doesn't exist yet, we use your active user to bootstrap
+    gcp-org-admins: group:gcp-org-admins@placard.media
     gcp-organization-admins: user:justin@placard.media
   locations:
     primary: europe-west2

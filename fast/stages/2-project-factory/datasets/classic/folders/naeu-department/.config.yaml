@@ -18,19 +18,47 @@ name: NAEU-department
 parent: $folder_ids:teams
 
 iam_by_principals:
-  $iam_principals:gcp-organization-admins:
-    - roles/owner
+  $iam_principals:gcp-billing-admins:
+    - roles/viewer
   $iam_principals:gcp-devops:
     - roles/resourcemanager.folderAdmin
     - roles/resourcemanager.projectCreator
     - roles/viewer
+  $iam_principals:gcp-mediacreators-users:
+    - roles/viewer
   $iam_principals:gcp-network-admins:
     - roles/compute.networkAdmin
     - roles/viewer
+  $iam_principals:gcp-org-admins:
+    - roles/cloudasset.owner
+    - roles/cloudsupport.admin
+    - roles/cloudsupport.techSupportEditor
+    - roles/compute.networkAdmin
+    - roles/compute.networkUser
+    - roles/compute.osAdminLogin
+    - roles/compute.osLoginExternalUser
+    - roles/compute.xpnAdmin
+    - roles/dialogflow.client
+    - roles/iam.securityAdmin
+    - roles/iam.serviceAccountTokenCreator
+    - roles/iam.workforcePoolAdmin
+    - roles/iam.workloadIdentityPoolAdmin
+    - roles/iap.tunnelResourceAccessor
+    - roles/monitoring.viewer
+    - roles/networkconnectivity.viewer
+    - roles/orgpolicy.policyAdmin
+    - roles/owner
+    - roles/resourcemanager.folderAdmin
+    - roles/resourcemanager.folderCreator
+    - roles/resourcemanager.folderEditor
+    - roles/resourcemanager.folderViewer
+    - roles/resourcemanager.organizationAdmin
+    - roles/resourcemanager.projectCreator
+    - roles/resourcemanager.tagAdmin
+    - roles/serviceusage.serviceUsageConsumer
+    - roles/viewer
+  $iam_principals:gcp-organization-admins:
+    - roles/owner
   $iam_principals:gcp-security-admins:
     - roles/iam.securityAdmin
     - roles/resourcemanager.folderViewer
-  $iam_principals:gcp-billing-admins:
-    - roles/viewer
-  $iam_principals:gcp-mediacreators-users:
-    - roles/viewer

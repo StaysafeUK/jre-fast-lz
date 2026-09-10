@@ -34,3 +34,11 @@ iam_by_principals:
     - roles/viewer
   $iam_principals:gcp-mediacreators-users:
     - roles/viewer
+
+org_policies:
+  gcp.resourceLocations:
+    rules:
+      - allow:
+          values:
+            - in:us-locations
+            - in:canada-locations

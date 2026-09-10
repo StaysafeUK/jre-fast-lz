@@ -49,3 +49,12 @@ iam_by_principals:
   $iam_principals:gcp-security-admins:
     - roles/iam.securityAdmin
     - roles/resourcemanager.folderViewer
+
+org_policies:
+  gcp.resourceLocations:
+    rules:
+      - allow:
+          values:
+            - in:us-locations
+            - in:canada-locations
+            - in:europe-locations

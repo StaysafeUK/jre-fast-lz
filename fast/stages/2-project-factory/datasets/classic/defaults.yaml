@@ -22,7 +22,7 @@ projects:
       storage: $locations:primary
   merges:
     services:
-      - logging.googleapis.com
+      # - logging.googleapis.com
       - monitoring.googleapis.com
   # edit and uncomment for vpc-sc cooperative configuration
   # overrides:

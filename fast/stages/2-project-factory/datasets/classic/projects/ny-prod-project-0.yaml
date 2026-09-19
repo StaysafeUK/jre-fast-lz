@@ -37,3 +37,9 @@ iam_by_principals:
   # Bind BigQuery administration rights to the NY production data admins group context key
   "$iam_principals:gcp-ny-prod-data-admins":
     - roles/bigquery.admin
+
+# BigQuery Datasets managed by the project-factory
+datasets:
+  my_dataset:
+    friendly_name: "My Dataset"
+    location: "US"

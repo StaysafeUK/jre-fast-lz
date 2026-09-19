@@ -39,3 +39,5 @@ iam_by_principals:
     - roles/viewer
   $iam_principals:gcp-mediacreators-users:
     - roles/viewer
+  $iam_principals:gcp-ny-prod-data-admins:
+    - roles/bigquery.admin

@@ -46,6 +46,7 @@ context:
     gcp-mediacreators-users: user:justin@placard.media
     gcp-network-admins: user:justin@placard.media
     gcp-ny-dev-vmadmins: user:justin@placard.media
+    gcp-ny-prod-data-admins: group:gcp-ny-prod-data-admins@placard.media
     gcp-org-admins: group:gcp-org-admins@placard.media
     gcp-organization-admins: user:justin@placard.media
     gcp-security-admins: user:justin@placard.media
